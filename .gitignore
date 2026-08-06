@@ -1,0 +1,32 @@
+# Node dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.*
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# VS Code settings
+.vscode/settings.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Coverage
+coverage/
+
+# Ignore uploaded resumes
+backend/uploads/*
+!backend/uploads/.gitkeep
