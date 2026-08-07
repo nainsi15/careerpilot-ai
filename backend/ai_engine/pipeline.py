@@ -348,6 +348,38 @@ def generate_ai_insights(parsed_resume: Dict[str, Any], normalized_jd: Dict[str,
         ]
     }
 
+def generate_learning_roadmap(missing_skills):
+    roadmap = []
+
+    if not missing_skills:
+        return [
+            {
+                "week": 1,
+                "title": "Interview Preparation",
+                "tasks": [
+                    "Revise DSA",
+                    "Solve 20 LeetCode questions",
+                    "Mock Interview"
+                ]
+            }
+        ]
+
+    week = 1
+
+    for skill in missing_skills:
+        roadmap.append({
+            "week": week,
+            "title": f"Learn {skill['skill']}",
+            "tasks": [
+                f"Study {skill['skill']} basics",
+                f"Complete one project using {skill['skill']}",
+                f"Practice interview questions on {skill['skill']}"
+            ]
+        })
+        week += 1
+
+    return roadmap
+
 def main():
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No command provided"}))
@@ -387,7 +419,9 @@ def main():
         
         ats_breakdown = compute_ats_score(parsed_resume, normalized_jd, raw_resume, raw_jd)
         insights = generate_ai_insights(parsed_resume, normalized_jd, ats_breakdown)
-        
+        roadmap = generate_learning_roadmap(
+    ats_breakdown["missing_skills"]
+)
         result = {
             "ats_score": ats_breakdown["overall_ats"],
             "skill_score": ats_breakdown["skill_score"],
@@ -400,7 +434,8 @@ def main():
             "missing_skills": ats_breakdown["missing_skills"],
             "rewritten_bullets": insights["rewritten_bullets"],
             "recruiter_feedback": insights["recruiter_feedback"],
-            "recommendations": insights["recommendations"]
+            "recommendations": insights["recommendations"],
+            "roadmap": roadmap,
         }
         print(json.dumps(result))
 

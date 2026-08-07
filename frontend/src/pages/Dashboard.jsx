@@ -18,6 +18,19 @@ export default function Dashboard() {
   const [jdTitle, setJdTitle] = useState('');
   const [uploading, setUploading] = useState(false);
 
+  const [currentStep, setCurrentStep] = useState(0);
+
+const analysisSteps = [
+  "Uploading Resume...",
+  "Extracting Resume Text...",
+  "Parsing Resume Sections...",
+  "Processing Job Description...",
+  "Matching Skills...",
+  "Computing ATS Score...",
+  "Generating AI Insights...",
+  "Preparing Report..."
+];
+
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
@@ -36,6 +49,7 @@ export default function Dashboard() {
   }, []);
 
   const handleQuickRun = async (e) => {
+    
     e.preventDefault();
     if (!resumeFile) {
       toast.error('Please select a resume file (PDF or DOCX)');
@@ -47,6 +61,17 @@ export default function Dashboard() {
     }
 
     setUploading(true);
+
+    setCurrentStep(0);
+
+const interval = setInterval(() => {
+  setCurrentStep(prev => {
+    if (prev < analysisSteps.length - 1)
+      return prev + 1;
+    return prev;
+  });
+}, 2500);
+
     try {
       // 1. Upload Resume
       const resumeFormData = new FormData();
@@ -66,6 +91,8 @@ export default function Dashboard() {
       console.error('Quick run error:', err);
       toast.error(err.response?.data?.error || 'Failed to complete quick analysis');
     } finally {
+      clearInterval(interval);
+setCurrentStep(0);
       setUploading(false);
     }
   };
@@ -207,8 +234,12 @@ export default function Dashboard() {
               className="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-white font-semibold text-xs hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-sky-500/20 transition-all flex items-center justify-center gap-2"
             >
               {uploading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
+    <div className="flex items-center gap-2">
+        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+
+        <span>{analysisSteps[currentStep]}</span>
+    </div>
+) : (
                 <>
                   <Sparkles className="w-4 h-4" />
                   <span>Run AI Match Engine</span>

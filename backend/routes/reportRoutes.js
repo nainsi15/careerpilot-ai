@@ -33,30 +33,73 @@ router.get('/:id', auth, async (req, res) => {
     doc.fillColor('#1E293B').fontSize(14).font('Helvetica-Bold').text(`Target Role: ${analysis.jobId?.title || 'Software Engineer'}`);
     doc.moveDown(0.5);
 
-    // ATS Score Card
-    doc.rect(40, doc.y, 515, 65).fill('#F8FAFC').stroke('#E2E8F0');
-    const startY = doc.y - 55;
-    
-    doc.fillColor('#0F172A').fontSize(24).font('Helvetica-Bold').text(`${analysis.atsScore}%`, 60, startY);
-    doc.fillColor('#64748B').fontSize(10).font('Helvetica').text('OVERALL ATS SCORE', 60, startY + 28);
+   // ==========================
+// ATS SUMMARY
+// ==========================
 
-    doc.fillColor('#0F172A').fontSize(18).font('Helvetica-Bold').text(`${analysis.semanticSimilarity}%`, 220, startY + 5);
-    doc.fillColor('#64748B').fontSize(10).font('Helvetica').text('SEMANTIC SIMILARITY', 220, startY + 28);
+doc.moveDown();
 
-    doc.fillColor('#0F172A').fontSize(14).font('Helvetica-Bold').text(`${analysis.shortlistReadiness}`, 380, startY + 7);
-    doc.fillColor('#64748B').fontSize(10).font('Helvetica').text('SHORTLIST STATUS', 380, startY + 28);
+const startY = doc.y;
 
-    doc.y = startY + 80;
+// Card Background
+doc.roundedRect(40, startY, 515, 110, 10)
+   .fill('#F8FAFC');
+
+doc.strokeColor('#CBD5E1')
+   .roundedRect(40, startY, 515, 110, 10)
+   .stroke();
+
+// ATS Score
+doc.fillColor('#2563EB')
+   .font('Helvetica-Bold')
+   .fontSize(34)
+   .text(`${analysis.atsScore}%`, 60, startY + 20);
+
+doc.fontSize(11)
+   .fillColor('#64748B')
+   .font('Helvetica')
+   .text('Overall ATS Score', 60, startY + 60);
+
+// Right Side Scores
+
+let x = 250;
+let y = startY + 18;
+
+doc.font('Helvetica-Bold')
+   .fillColor('#0F172A')
+   .fontSize(11);
+
+doc.text(`Semantic Similarity : ${analysis.semanticSimilarity}%`, x, y);
+
+y += 20;
+
+doc.text(`Skill Match         : ${analysis.skillScore}%`, x, y);
+
+y += 20;
+
+doc.text(`Section Score       : ${analysis.sectionScore}%`, x, y);
+
+y += 20;
+
+doc.text(`Impact Score        : ${analysis.impactScore}%`, x, y);
+
+y += 20;
+
+doc.fillColor('#16A34A')
+   .text(`Status : ${analysis.shortlistReadiness}`, x, y);
+
+// Move cursor below card
+doc.y = startY + 130;
 
     // Detailed Breakdown
     doc.fillColor('#1E293B').fontSize(14).font('Helvetica-Bold').text('Detailed Score Breakdown');
     doc.moveDown(0.5);
     doc.fontSize(11).font('Helvetica').fillColor('#334155');
-    doc.text(`• Keyword & Skill Match: ${analysis.skillScore}%`);
-    doc.text(`• Semantic Vector Alignment: ${analysis.semanticSimilarity}%`);
-    doc.text(`• Section Completeness: ${analysis.sectionScore}%`);
-    doc.text(`• Impact & Formatting Verbs: ${analysis.impactScore}%`);
-    doc.moveDown(1);
+ doc.text(`• Keyword & Skill Match: ${analysis.skillScore}%`);
+doc.text(`• Semantic Vector Alignment: ${analysis.semanticSimilarity}%`);
+doc.text(`• Section Completeness: ${analysis.sectionScore}%`);
+doc.text(`• Impact & Formatting Verbs: ${analysis.impactScore}%`);
+doc.moveDown(1);
 
     // Missing Skills
     if (analysis.missingSkills && analysis.missingSkills.length > 0) {
@@ -82,12 +125,42 @@ router.get('/:id', auth, async (req, res) => {
       doc.fillColor('#1E293B').fontSize(14).font('Helvetica-Bold').text('ATS-Optimized Bullet Point Suggestions');
       doc.moveDown(0.5);
       analysis.rewrittenBullets.forEach((bullet, idx) => {
-        doc.fontSize(10).font('Helvetica-Bold').fillColor('#94A3B8').text(`[Original ${idx + 1}]: `);
-        doc.font('Helvetica').fillColor('#64748B').text(bullet.original);
-        doc.font('Helvetica-Bold').fillColor('#059669').text(`[Improved ${idx + 1}]: `);
-        doc.font('Helvetica').fillColor('#0F172A').text(bullet.improved);
-        doc.moveDown(0.5);
-      });
+
+    if (doc.y > 650) {
+        doc.addPage();
+    }
+
+    doc.fontSize(12)
+       .fillColor('#2563EB')
+       .font('Helvetica-Bold')
+       .text(`Suggestion ${idx + 1}`);
+
+    doc.moveDown(0.2);
+
+    doc.fontSize(10)
+       .fillColor('#64748B')
+       .font('Helvetica')
+       .text("Original:");
+
+    doc.moveDown(0.2);
+
+    doc.fillColor('#0F172A')
+       .text(bullet.original);
+
+    doc.moveDown(0.4);
+
+    doc.font('Helvetica-Bold')
+       .fillColor('#16A34A')
+       .text("Improved:");
+
+    doc.moveDown(0.2);
+
+    doc.font('Helvetica')
+       .fillColor('#0F172A')
+       .text(bullet.improved);
+
+    doc.moveDown();
+});
     }
 
     doc.end();

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const analysisSchema = new mongoose.Schema({
+
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   resumeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Resume', required: true },
   jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'JobDescription', required: true },
@@ -30,6 +31,15 @@ const analysisSchema = new mongoose.Schema({
   ],
   recruiterFeedback: { type: String },
   recommendations: [{ type: String }],
+
+  
+  roadmap: [
+{
+    week: Number,
+    title: String,
+    tasks: [String]
+}
+],
   
   createdAt: { type: Date, default: Date.now }
 });

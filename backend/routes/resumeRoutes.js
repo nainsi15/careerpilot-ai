@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (ext === '.pdf' || ext === '.docx' || ext === '.doc') {
@@ -36,6 +36,10 @@ const upload = multer({
 // Helper function to call Python parser
 function parseResumeWithPython(filePath) {
   return new Promise((resolve, reject) => {
+
+    // ⏱ Start Timer
+    console.time("Python Resume Parse");
+
     const pythonPath = process.env.PYTHON_PATH || 'python';
     const scriptPath = path.join(__dirname, '../ai_engine/pipeline.py');
     const child = spawn(pythonPath, [scriptPath, 'parse_resume', filePath]);
@@ -43,14 +47,24 @@ function parseResumeWithPython(filePath) {
     let output = '';
     let errorOutput = '';
 
-    child.stdout.on('data', (data) => { output += data.toString(); });
-    child.stderr.on('data', (data) => { errorOutput += data.toString(); });
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
 
     child.on('close', (code) => {
+
+      // ⏱ End Timer
+      console.timeEnd("Python Resume Parse");
+
       if (code !== 0) {
         console.error('Python parse error:', errorOutput);
         return reject(new Error('Failed to parse resume file.'));
       }
+
       try {
         const json = JSON.parse(output);
         resolve(json);
@@ -71,8 +85,10 @@ router.post('/upload', auth, upload.single('resume'), async (req, res) => {
     const filePath = req.file.path;
     const parsedResult = await parseResumeWithPython(filePath);
 
-    // Calculate version number for user
-    const existingCount = await Resume.countDocuments({ userId: req.user.userId });
+    const existingCount = await Resume.countDocuments({
+      userId: req.user.userId
+    });
+
     const version = existingCount + 1;
 
     const resume = new Resume({
@@ -93,9 +109,12 @@ router.post('/upload', auth, upload.single('resume'), async (req, res) => {
       parsedData: resume.parsedData,
       rawText: resume.rawText
     });
+
   } catch (err) {
     console.error('Resume upload error:', err);
-    res.status(500).json({ error: err.message || 'Server error uploading resume.' });
+    res.status(500).json({
+      error: err.message || 'Server error uploading resume.'
+    });
   }
 });
 

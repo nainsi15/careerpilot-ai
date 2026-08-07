@@ -4,6 +4,9 @@ import { analysisAPI, reportAPI } from '../services/api';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { Sparkles, Download, CheckCircle2, AlertTriangle, ExternalLink, ArrowRight, GitCompare, RefreshCw, FileText, Award, ShieldCheck, Zap, Layers } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from "axios";
+import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import "react-circular-progressbar/dist/styles.css";
 
 export default function AnalysisResults() {
   const { id } = useParams();
@@ -27,8 +30,37 @@ export default function AnalysisResults() {
       setLoading(false);
     }
   };
+  const handleDownload = async () => {
+  try {
+    const token = localStorage.getItem("cp_token");
 
-  if (loading) {
+    const response = await axios.get(
+      `http://localhost:5000/report/${analysis._id}`,
+      {
+        responseType: "blob",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `CareerPilot_Report_${analysis._id}.pdf`;
+
+    document.body.appendChild(link);
+    link.click();
+
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to download report.");
+  }
+};
+ if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
         <div className="w-10 h-10 border-4 border-sky-400 border-t-transparent rounded-full animate-spin" />
@@ -93,15 +125,13 @@ export default function AnalysisResults() {
             <span>Compare Versions</span>
           </Link>
 
-          <a
-            href={reportAPI.getDownloadUrl(analysis._id)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-white font-semibold text-xs hover:brightness-110 shadow-lg shadow-sky-500/20 transition-all flex items-center gap-2"
-          >
+         <button
+  onClick={handleDownload}
+  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-white font-semibold text-xs hover:brightness-110 shadow-lg shadow-sky-500/20 transition-all flex items-center gap-2"
+>
             <Download className="w-4 h-4" />
             <span>Download PDF Report</span>
-          </a>
+          </button>
         </div>
       </div>
 
@@ -111,9 +141,20 @@ export default function AnalysisResults() {
         {/* ATS Score Gauge */}
         <div className="glass-card p-6 rounded-2xl border border-slate-800 text-center space-y-2 flex flex-col justify-center">
           <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Overall ATS Score</span>
-          <div className="relative inline-flex items-center justify-center my-2">
-            <span className="text-4xl font-extrabold text-white">{analysis.atsScore}%</span>
-          </div>
+         <div className="w-28 h-28 mx-auto">
+
+<CircularProgressbar
+    value={analysis.atsScore}
+    text={`${analysis.atsScore}%`}
+    styles={buildStyles({
+        textColor: "#ffffff",
+        pathColor: "#38bdf8",
+        trailColor: "#1e293b",
+        textSize: "18px",
+    })}
+/>
+
+</div>
           <div className={`text-xs px-3 py-1 rounded-full border mx-auto font-semibold ${getScoreColor(analysis.atsScore)}`}>
             {analysis.atsScore >= 80 ? 'Optimal ATS Rank' : analysis.atsScore >= 60 ? 'Competitive' : 'Needs Optimization'}
           </div>
@@ -246,9 +287,55 @@ export default function AnalysisResults() {
               ))}
             </div>
           </div>
+{/* AI Learning Roadmap */}
+
+{analysis.roadmap && analysis.roadmap.length > 0 && (
+  <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-6">
+
+    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+      🗺 Personalized Learning Roadmap
+    </h3>
+
+    <div className="space-y-5">
+
+      {analysis.roadmap.map((week, index) => (
+
+        <div
+          key={index}
+          className="rounded-xl border border-slate-700 bg-slate-900/60 p-5"
+        >
+
+          <h4 className="text-sky-400 font-bold text-base mb-3">
+            Week {week.week}: {week.title}
+          </h4>
+
+          <ul className="space-y-2">
+
+            {week.tasks.map((task, i) => (
+
+              <li
+                key={i}
+                className="flex items-start gap-2 text-slate-300 text-sm"
+              >
+                <span className="text-green-400 mt-0.5">✔</span>
+                {task}
+              </li>
+
+            ))}
+
+          </ul>
 
         </div>
+
+      ))}
+
+    </div>
+
+  </div>
+)}
+        </div>
       )}
+      
 
       {/* TAB 2: REWRITTEN RESUME BULLETS */}
       {activeTab === 'bullets' && (

@@ -3,7 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
 const dotenv = require('dotenv');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+
 
 dotenv.config();
 
@@ -37,27 +37,20 @@ app.get('/health', (req, res) => {
 
 // MongoDB Connection Handler with MongoMemoryServer Fallback
 async function startServer() {
-  const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/careerpilot';
-
   try {
-    await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 2000 });
-    console.log('Connected to Local MongoDB database');
-  } catch (err) {
-    console.log('Local MongoDB connection failed. Starting in-memory MongoDB Server...');
-    try {
-      const mongod = await MongoMemoryServer.create();
-      const memoryUri = mongod.getUri();
-      await mongoose.connect(memoryUri);
-      console.log('Connected to MongoDB Memory Server successfully!');
-    } catch (memErr) {
-      console.error('Fatal: Could not connect to any MongoDB instance:', memErr);
-      process.exit(1);
-    }
-  }
+    await mongoose.connect(process.env.MONGODB_URI);
 
-  app.listen(PORT, () => {
-    console.log(`CareerPilot AI Backend listening on port ${PORT}`);
-  });
+    console.log("✅ Connected to MongoDB Atlas");
+
+    app.listen(PORT, () => {
+      console.log(`🚀 CareerPilot AI Backend running on port ${PORT}`);
+    });
+
+  } catch (err) {
+    console.error("❌ MongoDB Connection Failed");
+    console.error(err.message);
+    process.exit(1);
+  }
 }
 
 startServer();

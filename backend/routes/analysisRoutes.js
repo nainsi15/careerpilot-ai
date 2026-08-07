@@ -83,7 +83,8 @@ router.post('/run', auth, async (req, res) => {
       missingSkills: analysisResult.missing_skills,
       rewrittenBullets: analysisResult.rewritten_bullets,
       recruiterFeedback: analysisResult.recruiter_feedback,
-      recommendations: analysisResult.recommendations
+      recommendations: analysisResult.recommendations,
+      roadmap: analysisResult.roadmap
     });
 
     await analysis.save();
