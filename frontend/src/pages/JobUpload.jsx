@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { jobAPI, analysisAPI } from '../services/api';
-import { Briefcase, Sparkles, ArrowRight, AlertTriangle, CheckCircle2, Layers } from 'lucide-react';
+import { Briefcase, Sparkles, AlertTriangle, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function JobUpload() {
@@ -71,47 +72,51 @@ export default function JobUpload() {
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
       
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 text-xs font-semibold text-sky-400 bg-sky-500/10 px-3.5 py-1 rounded-full border border-sky-500/20">
+        <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#3B82F6] bg-[#3B82F6]/10 px-3.5 py-1 rounded-full border border-[#3B82F6]/20">
           <Briefcase className="w-3.5 h-3.5" />
           <span>Step 2 of 2: Job Normalizer</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-white">Target Job Description</h1>
-        <p className="text-xs text-slate-400 max-w-md mx-auto">
+        <h1 className="text-3xl font-bold tracking-tight text-[#111827] dark:text-[#F8FAFC]">Target Job Description</h1>
+        <p className="text-xs sm:text-sm text-[#4B5563] dark:text-slate-400 max-w-md mx-auto">
           Paste any Job Description — even vague or bulletless text. Our Gemini AI model restructures vague job posts into explicit technical requirements.
         </p>
       </div>
 
       {/* Input Form */}
-      <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="linear-card p-6 sm:p-8 space-y-4"
+      >
         <form onSubmit={handleNormalize} className="space-y-4">
           
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Job Title / Company Name</label>
+            <label className="text-xs font-semibold text-[#374151] dark:text-slate-300">Job Title / Company Name</label>
             <input
               type="text"
               placeholder="e.g. Frontend Engineer at Vercel"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-sm text-white focus:outline-none focus:border-sky-500"
+              className="saas-input w-full px-4 py-2.5 text-sm"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Job Description Text</label>
+            <label className="text-xs font-semibold text-[#374151] dark:text-slate-300">Job Description Text</label>
             <textarea
               rows={8}
               required
               placeholder="Paste full job description, requirements, or bullet points here..."
               value={rawText}
               onChange={(e) => setRawText(e.target.value)}
-              className="w-full p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-sm text-white focus:outline-none focus:border-sky-500 resize-none placeholder:text-slate-600"
+              className="saas-input w-full p-4 text-sm resize-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-white font-semibold text-sm hover:brightness-110 disabled:opacity-50 shadow-lg shadow-sky-500/20 transition-all flex items-center justify-center gap-2"
+            className="btn-primary w-full py-3 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -123,31 +128,35 @@ export default function JobUpload() {
             )}
           </button>
         </form>
-      </div>
+      </motion.div>
 
       {/* Normalized Result Card */}
       {normalizedResult && (
-        <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="linear-card p-6 sm:p-8 space-y-6"
+        >
           
           {normalizedResult.isVague && (
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs flex items-center gap-3">
+            <div className="p-4 rounded-xl bg-[#FEF3C7] dark:bg-amber-500/10 border border-[#FDE68A] dark:border-amber-500/20 text-[#B45309] dark:text-[#F59E0B] text-xs flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 shrink-0" />
               <div>
                 <p className="font-bold">Vague Job Description Detected</p>
-                <p className="text-[11px] text-amber-300/80">AI has inferred standard role requirements to ensure accurate keyword matching.</p>
+                <p className="text-[11px] opacity-90">AI has inferred standard role requirements to ensure accurate keyword matching.</p>
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-bold text-white">AI Normalized Requirements</h2>
-              <p className="text-xs text-slate-400">Structured requirements ready for embedding match</p>
+              <h2 className="text-base font-bold text-[#111827] dark:text-[#F8FAFC]">AI Normalized Requirements</h2>
+              <p className="text-xs text-[#6B7280] dark:text-slate-400">Structured requirements ready for embedding match</p>
             </div>
             <button
               onClick={handleRunFullAnalysis}
               disabled={loading}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 text-white font-bold text-xs hover:brightness-110 shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2"
+              className="btn-primary py-2.5 text-xs font-semibold flex items-center justify-center gap-2"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -161,20 +170,20 @@ export default function JobUpload() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2 p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-              <h4 className="text-xs font-semibold text-slate-300">Required Skills</h4>
+            <div className="space-y-2.5 p-4 rounded-xl bg-[#F9FAFB] dark:bg-[#0B1220]/60 border border-[#E5E7EB] dark:border-white/[0.06]">
+              <h4 className="text-xs font-semibold text-[#374151] dark:text-slate-300">Required Skills</h4>
               <div className="flex flex-wrap gap-1.5">
                 {normalizedResult.normalizedData?.required_skills?.map((skill, idx) => (
-                  <span key={idx} className="px-2.5 py-1 rounded-lg bg-sky-500/10 text-sky-400 text-xs font-medium border border-sky-500/20">
+                  <span key={idx} className="px-2.5 py-1 rounded-lg bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-medium border border-[#3B82F6]/20">
                     {skill}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-2 p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-              <h4 className="text-xs font-semibold text-slate-300">Responsibilities</h4>
-              <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
+            <div className="space-y-2.5 p-4 rounded-xl bg-[#F9FAFB] dark:bg-[#0B1220]/60 border border-[#E5E7EB] dark:border-white/[0.06]">
+              <h4 className="text-xs font-semibold text-[#374151] dark:text-slate-300">Responsibilities</h4>
+              <ul className="text-xs text-[#4B5563] dark:text-slate-400 space-y-1 list-disc list-inside">
                 {normalizedResult.normalizedData?.responsibilities?.map((resp, idx) => (
                   <li key={idx}>{resp}</li>
                 ))}
@@ -182,7 +191,7 @@ export default function JobUpload() {
             </div>
           </div>
 
-        </div>
+        </motion.div>
       )}
 
     </div>

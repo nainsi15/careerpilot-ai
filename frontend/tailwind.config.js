@@ -8,22 +8,53 @@ export default {
   theme: {
     extend: {
       colors: {
-        dark: {
-          bg: '#0B0F17',
-          card: '#131B2E',
-          hover: '#1B2640',
-          border: '#23314E'
+        // Dark Mode (Linear) Tokens
+        linear: {
+          bg: '#05070B',
+          surface: '#0B1220',
+          card: '#111827',
+          elevated: '#172033',
+          border: 'rgba(255,255,255,0.06)',
+          text: '#F8FAFC',
+          secondary: '#94A3B8',
+          muted: '#64748B',
+          blue: '#3B82F6',
+          indigo: '#6366F1',
+          cyan: '#38BDF8',
+          green: '#22C55E',
+          amber: '#F59E0B',
+          red: '#EF4444',
         },
-        brand: {
-          primary: '#38BDF8',
-          accent: '#818CF8',
-          emerald: '#10B981',
-          rose: '#F43F5E',
-          purple: '#A855F7'
+        // Light Mode (Stripe/Notion/Vercel) Tokens
+        saas: {
+          bg: '#F5F7FB',
+          secondary: '#EEF2F7',
+          card: '#FFFFFF',
+          hover: '#FCFCFD',
+          border: '#E5E7EB',
+          text: '#111827',
+          body: '#374151',
+          secondaryText: '#4B5563',
+          muted: '#6B7280',
+          blue: '#3B82F6',
+          indigo: '#6366F1',
+          green: '#22C55E',
+          amber: '#F59E0B',
+          red: '#EF4444',
         }
       },
+      borderRadius: {
+        'xl': '14px',
+        '2xl': '18px',
+        '3xl': '22px',
+      },
+      boxShadow: {
+        'card-light': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
+        'card-light-hover': '0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 4px 10px -2px rgba(0, 0, 0, 0.03)',
+        'card-dark': '0 4px 20px -2px rgba(0, 0, 0, 0.25)',
+      },
       fontFamily: {
-        sans: ['Inter', 'sans-serif']
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
       }
     },
   },

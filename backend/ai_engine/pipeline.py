@@ -348,33 +348,204 @@ def generate_ai_insights(parsed_resume: Dict[str, Any], normalized_jd: Dict[str,
         ]
     }
 
-def generate_learning_roadmap(missing_skills):
-    roadmap = []
+def classify_skill(skill_name: str) -> str:
+    s = skill_name.lower().strip()
+    interview_keywords = ["sql", "dsa", "algo", "data structure", "algorithm", "oop", "object oriented", "os", "operating system", "dbms", "database management", "cn", "computer network", "system design", "architecture"]
+    tool_keywords = ["git", "github", "docker", "linux", "ci/cd", "github actions", "bash", "kubernetes", "jenkins", "webpack", "vite", "agile", "jira"]
+    cloud_keywords = ["aws", "azure", "gcp", "cloud", "s3", "ec2", "lambda"]
 
+    if any(k in s for k in interview_keywords):
+        return "interview"
+    if any(k in s for k in tool_keywords):
+        return "tool"
+    if any(k in s for k in cloud_keywords):
+        return "cloud"
+    return "framework"
+
+def generate_senior_learning_roadmap(missing_skills: List[Dict[str, Any]], target_role: str = "Software Engineer", ats_score: float = 70.0, parsed_resume: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    """Generates senior engineering mentor level roadmap using Gemini or intelligent rule-based templates."""
     if not missing_skills:
         return [
             {
                 "week": 1,
-                "title": "Interview Preparation",
+                "skill": "System Architecture & Mock Interviews",
+                "category": "interview",
+                "title": "Interview Readiness & System Architecture Polish",
+                "why_it_matters": f"Your current ATS match is high. For {target_role} roles, final round success depends on clear technical communication and problem-solving clarity.",
+                "recruiter_evaluation": "Recruiters and hiring managers evaluate your ability to explain complex technical trade-offs, edge cases, and time/space complexity under pressure.",
+                "core_concepts": [
+                    "High-Level System Architecture & Component Design",
+                    "Time & Space Complexity Trade-off Explanations",
+                    "Edge Case Handling & Input Validation Strategies",
+                    "STAR Method for Behavioral & System Case Studies"
+                ],
+                "practical_exercises": [
+                    "Conduct 2 peer mock interviews focusing on System Design & Live Coding.",
+                    "Review recent interview experience reports for target companies.",
+                    "Audit existing project READMEs to clearly outline architecture decisions."
+                ],
+                "interview_strategy": "Spend 45 minutes daily timing yourself solving medium-hard coding challenges while speaking your thought process aloud.",
+                "estimated_effort": "3-5 days",
+                "expected_impact": "Clears final-round technical bar and converts interviews into offers.",
                 "tasks": [
-                    "Revise DSA",
-                    "Solve 20 LeetCode questions",
-                    "Mock Interview"
+                    "Conduct 2 peer mock interviews focusing on System Design & Live Coding.",
+                    "Review time & space complexity trade-offs for core data structures.",
+                    "Audit existing project READMEs to highlight architecture decisions."
                 ]
             }
         ]
 
+    # Try Gemini Client first for dynamic AI coaching
+    if gemini_client:
+        try:
+            prompt = f"""
+            You are a Senior Engineering Director and Technical Hiring Manager at a top tech company (Linear, Stripe, Vercel).
+            Generate a personalized engineering learning roadmap for a candidate applying for the target role: "{target_role}".
+            Current ATS Match Score: {ats_score}%.
+            Missing Skills Detected: {json.dumps([m['skill'] for m in missing_skills])}
+
+            STRICT MENTORSHIP RULES:
+            1. Do NOT assume every missing skill requires building a new project.
+            2. For INTERVIEW-FOCUSED skills (DSA, SQL, OOP, OS, DBMS, Computer Networks, System Design): Recommend interview preparation, practice patterns (LeetCode patterns, SQL indexing/joins, SOLID principles), and revision strategies. Do NOT recommend building projects.
+            3. For DEVELOPMENT TOOLS (Git, Docker, Linux, CI/CD, GitHub Actions): Recommend practical exercises applied to their EXISTING projects (e.g., containerize existing API, write GitHub Actions CI workflow). Do NOT recommend creating a new project.
+            4. For CLOUD TECHNOLOGIES (AWS, Azure, GCP): Recommend learning ONLY the services relevant to "{target_role}" (e.g. S3, Lambda, EC2 for backend; S3/CDN for frontend). Do NOT recommend building a cloud project unless the target role explicitly requires cloud engineering.
+            5. For FRAMEWORKS (React, Node.js, Spring Boot, Express, Python): Recommend strengthening weak concepts, best practices, debugging, architecture, and refactoring their EXISTING project.
+
+            For EACH missing skill, generate a structured roadmap object in a JSON array.
+            JSON schema per item:
+            - "week": (integer 1..N)
+            - "skill": (string name)
+            - "category": ("interview" | "tool" | "cloud" | "framework")
+            - "title": (action-oriented title, e.g., "SQL Query Tuning & Schema Normalization")
+            - "why_it_matters": (why this matters for the target role)
+            - "recruiter_evaluation": (how recruiters screen & test this skill)
+            - "core_concepts": (list of 3-4 specific technical concepts)
+            - "practical_exercises": (list of 2-3 practical exercises or existing project refactoring tasks)
+            - "interview_strategy": (targeted interview revision strategy & question pattern)
+            - "estimated_effort": (e.g., "3-4 days", "1 week")
+            - "expected_impact": (expected boost to ATS score & interview readiness)
+            - "tasks": (list of strings summarizing key steps)
+
+            Return JSON ONLY as an array of roadmap objects.
+            """
+            response = gemini_client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+            raw = response.text.strip()
+            if "```json" in raw:
+                raw = raw.split("```json")[1].split("```")[0].strip()
+            elif "```" in raw:
+                raw = raw.split("```")[1].split("```")[0].strip()
+            result = json.loads(raw)
+            if isinstance(result, list) and len(result) > 0:
+                return result
+        except Exception as e:
+            sys.stderr.write(f"Gemini Senior Roadmap generation error: {e}\n")
+
+    # Fallback Deterministic Mentor Engine
+    roadmap = []
     week = 1
 
-    for skill in missing_skills:
+    for item in missing_skills:
+        skill_name = item.get("skill", "Technology")
+        cat = classify_skill(skill_name)
+
+        if cat == "interview":
+            title = f"{skill_name.upper()} Interview Patterns & Core Revision"
+            why_it_matters = f"{skill_name.upper()} is a core screening requirement for {target_role} positions. Demonstrating mastery in technical interviews is mandatory for advancing to final rounds."
+            recruiter_evaluation = f"Recruiters evaluate {skill_name.upper()} through automated online coding assessments (OA) and live whiteboard problem-solving rounds focusing on efficiency and correctness."
+            concepts = [
+                f"Core {skill_name.upper()} execution patterns and standard data structures",
+                "Time and Space complexity optimization (Big-O analysis)",
+                "Edge case handling, boundary condition testing, and null pointer guards",
+                "Common interview problem variations and trade-off explanations"
+            ]
+            exercises = [
+                f"Solve 12-15 curated medium-level interview problems on {skill_name.upper()}.",
+                f"Practice writing clean, bug-free {skill_name.upper()} code without relying on IDE autocomplete.",
+                f"Perform a timed 45-minute mock coding test focused on {skill_name.upper()} concepts."
+            ]
+            interview_strat = f"Focus on identifying pattern recognition (e.g., Two Pointers, Windowing, Indexing) for {skill_name.upper()} rather than memorizing individual solutions."
+            effort = "4-6 days"
+            impact = f"+15% ATS Match Score & clears technical OA bar for {target_role}."
+
+        elif cat == "tool":
+            title = f"Integrate {skill_name.title()} into Existing Project Workflow"
+            why_it_matters = f"Proficiency in {skill_name.title()} signals production-readiness and modern DevOps hygiene to technical recruiters hiring for {target_role}."
+            recruiter_evaluation = f"Recruiters inspect candidate GitHub repositories to check if tools like {skill_name.title()} are configured properly with clean commit history and automated pipeline badges."
+            concepts = [
+                f"{skill_name.title()} setup, configuration files, and environment variable management",
+                f"Best practices for workflow automation and script execution with {skill_name.title()}",
+                "Debugging build failures, log analysis, and local environment isolation",
+                "Integration with version control and team deployment pipelines"
+            ]
+            exercises = [
+                f"Add a production {skill_name.title()} configuration file directly to your existing primary project.",
+                f"Test and verify that your application builds and runs cleanly using {skill_name.title()} locally.",
+                f"Document your {skill_name.title()} workflow setup in your project's README."
+            ]
+            interview_strat = f"Be prepared to explain why you configured {skill_name.title()} in your existing project and how it improved your development speed and deployment reliability."
+            effort = "2-3 days"
+            impact = f"+10% ATS Match Score & demonstrates production developer maturity."
+
+        elif cat == "cloud":
+            title = f"{target_role.title()}-Focused {skill_name.upper()} Services & Architecture"
+            why_it_matters = f"Understanding key {skill_name.upper()} services is critical for building scalable, cloud-native applications in modern {target_role} roles."
+            recruiter_evaluation = f"Recruiters look for specific {skill_name.upper()} service keywords (e.g. S3, EC2, IAM) on your resume and test your understanding of cloud architecture trade-offs in system design interviews."
+            concepts = [
+                f"Essential {skill_name.upper()} services relevant to {target_role} (e.g., Object Storage, Compute, IAM)",
+                "Security policies, API keys, and environment secret management in the cloud",
+                "Basic cloud deployment concepts, domain mapping, and SSL termination",
+                "Cost control, resource monitoring, and serverless vs provisioned compute"
+            ]
+            exercises = [
+                f"Review official documentation and core architecture patterns for {skill_name.upper()}.",
+                f"Configure access permissions and environment variables for cloud integration in your existing project.",
+                f"Diagram a simple architecture showing how your app interacts with {skill_name.upper()} services."
+            ]
+            interview_strat = f"Focus on explaining when to use specific {skill_name.upper()} services vs self-hosted alternatives and how to secure cloud credentials."
+            effort = "3-4 days"
+            impact = f"+12% ATS Match Score & fulfills cloud infrastructure requirement for {target_role}."
+
+        else: # framework
+            title = f"Master {skill_name.title()} Architecture & Refactor Existing Application"
+            why_it_matters = f"Deep expertise in {skill_name.title()} is a primary core requirement for {target_role} engineering positions."
+            recruiter_evaluation = f"Recruiters evaluate {skill_name.title()} through technical code reviews, checking for clean code patterns, error handling, state management, and separation of concerns."
+            concepts = [
+                f"{skill_name.title()} advanced concepts, lifecycle, and component/module architecture",
+                "State management, asynchronous data flow, and error boundary handling",
+                "Performance optimization, memory leak prevention, and code splitting",
+                "Unit testing, API integration patterns, and clean code refactoring"
+            ]
+            exercises = [
+                f"Audit your existing project code written in {skill_name.title()} and refactor messy/duplicate functions.",
+                f"Implement proper error handling, logging, and async state feedback in your {skill_name.title()} codebase.",
+                f"Add automated unit or integration tests for core logic in {skill_name.title()}."
+            ]
+            interview_strat = f"Practice explaining how {skill_name.title()} works under the hood (e.g., virtual DOM, event loop, middleware chain) and how you optimized your existing application."
+            effort = "4-5 days"
+            impact = f"+15% ATS Match Score & proves production-level framework proficiency."
+
+        tasks = [
+            f"Master core {skill_name} concepts for {target_role}",
+            exercises[0],
+            interview_strat
+        ]
+
         roadmap.append({
             "week": week,
-            "title": f"Learn {skill['skill']}",
-            "tasks": [
-                f"Study {skill['skill']} basics",
-                f"Complete one project using {skill['skill']}",
-                f"Practice interview questions on {skill['skill']}"
-            ]
+            "skill": skill_name,
+            "category": cat,
+            "title": title,
+            "why_it_matters": why_it_matters,
+            "recruiter_evaluation": recruiter_evaluation,
+            "core_concepts": concepts,
+            "practical_exercises": exercises,
+            "interview_strategy": interview_strat,
+            "estimated_effort": effort,
+            "expected_impact": impact,
+            "tasks": tasks
         })
         week += 1
 
@@ -419,9 +590,12 @@ def main():
         
         ats_breakdown = compute_ats_score(parsed_resume, normalized_jd, raw_resume, raw_jd)
         insights = generate_ai_insights(parsed_resume, normalized_jd, ats_breakdown)
-        roadmap = generate_learning_roadmap(
-    ats_breakdown["missing_skills"]
-)
+        roadmap = generate_senior_learning_roadmap(
+            ats_breakdown["missing_skills"],
+            target_role=normalized_jd.get("title", "Software Engineer"),
+            ats_score=ats_breakdown["overall_ats"],
+            parsed_resume=parsed_resume
+        )
         result = {
             "ats_score": ats_breakdown["overall_ats"],
             "skill_score": ats_breakdown["skill_score"],
@@ -441,3 +615,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

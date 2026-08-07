@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { resumeAPI } from '../services/api';
-import { FileText, Upload, CheckCircle2, ArrowRight, AlertCircle, Sparkles, FileCode, Check } from 'lucide-react';
+import { FileText, Upload, CheckCircle2, ArrowRight, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ResumeUpload() {
@@ -53,20 +54,24 @@ export default function ResumeUpload() {
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
       
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 text-xs font-semibold text-sky-400 bg-sky-500/10 px-3.5 py-1 rounded-full border border-sky-500/20">
+        <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#3B82F6] bg-[#3B82F6]/10 px-3.5 py-1 rounded-full border border-[#3B82F6]/20">
           <FileText className="w-3.5 h-3.5" />
           <span>Step 1 of 2: Resume Parser</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-white">Upload Your Resume</h1>
-        <p className="text-xs text-slate-400 max-w-md mx-auto">
+        <h1 className="text-3xl font-bold tracking-tight text-[#111827] dark:text-[#F8FAFC]">Upload Your Resume</h1>
+        <p className="text-xs sm:text-sm text-[#4B5563] dark:text-slate-400 max-w-md mx-auto">
           Our PyMuPDF and spaCy NLP pipeline automatically extracts contact details, skills, education, and bullet points into structured JSON.
         </p>
       </div>
 
       {/* Upload Dropzone */}
-      <div className="glass-card p-8 rounded-2xl border border-slate-800 space-y-6 text-center">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="linear-card p-8 space-y-6 text-center"
+      >
         
-        <div className="border-2 border-dashed border-slate-700 hover:border-sky-500/50 rounded-2xl p-10 transition-colors bg-slate-900/40 relative">
+        <div className="border-2 border-dashed border-[#D1D5DB] dark:border-white/10 hover:border-[#3B82F6] rounded-2xl p-10 transition-colors bg-[#F9FAFB] dark:bg-[#0B1220]/40 relative group">
           <input
             type="file"
             accept=".pdf,.docx,.doc"
@@ -74,17 +79,17 @@ export default function ResumeUpload() {
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
           <div className="space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 mx-auto flex items-center justify-center text-sky-400">
-              <Upload className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-xl bg-[#3B82F6]/10 border border-[#3B82F6]/20 mx-auto flex items-center justify-center text-[#3B82F6] group-hover:scale-105 transition-transform">
+              <Upload className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">
+              <p className="text-sm font-semibold text-[#111827] dark:text-slate-200">
                 {file ? file.name : 'Drag & Drop PDF or DOCX resume here'}
               </p>
-              <p className="text-xs text-slate-400 mt-1">Maximum file size: 10MB</p>
+              <p className="text-xs text-[#6B7280] dark:text-slate-400 mt-1">Maximum file size: 10MB</p>
             </div>
             {file && (
-              <span className="inline-block text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+              <span className="inline-block text-xs font-mono text-[#22C55E] bg-[#22C55E]/10 px-3 py-1 rounded-full border border-[#22C55E]/20">
                 Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)
               </span>
             )}
@@ -95,7 +100,7 @@ export default function ResumeUpload() {
         <button
           onClick={handleUpload}
           disabled={!file || loading}
-          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-white font-semibold text-sm hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-sky-500/20 transition-all flex items-center justify-center gap-2"
+          className="btn-primary w-full py-3 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -107,13 +112,17 @@ export default function ResumeUpload() {
           )}
         </button>
 
-      </div>
+      </motion.div>
 
       {/* Live Parser Pipeline Progress */}
       {parsingStep > 0 && (
-        <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-          <h3 className="text-sm font-bold text-white">PyMuPDF & spaCy Parsing Pipeline</h3>
-          <div className="space-y-2">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="linear-card p-6 space-y-4"
+        >
+          <h3 className="text-sm font-bold text-[#111827] dark:text-[#F8FAFC]">PyMuPDF & spaCy Parsing Pipeline</h3>
+          <div className="space-y-2.5">
             {[
               { step: 1, text: 'PyMuPDF raw text stream extraction' },
               { step: 2, text: 'spaCy NER & section classification' },
@@ -122,32 +131,36 @@ export default function ResumeUpload() {
             ].map((s) => (
               <div key={s.step} className="flex items-center gap-3 text-xs">
                 {parsingStep > s.step ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
                 ) : parsingStep === s.step ? (
-                  <div className="w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-[#3B82F6] border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <div className="w-4 h-4 rounded-full border border-slate-700" />
+                  <div className="w-4 h-4 rounded-full border border-[#D1D5DB] dark:border-slate-700" />
                 )}
-                <span className={parsingStep >= s.step ? 'text-slate-200' : 'text-slate-500'}>
+                <span className={parsingStep >= s.step ? 'text-[#111827] dark:text-slate-200 font-semibold' : 'text-[#6B7280] dark:text-slate-500'}>
                   {s.text}
                 </span>
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Extracted JSON Preview Card */}
       {parsedResult && (
-        <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="linear-card p-6 space-y-6"
+        >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-white">Parsed Resume Structure</h2>
-              <p className="text-xs text-slate-400">Extracted from PyMuPDF & spaCy</p>
+              <h2 className="text-base font-bold text-[#111827] dark:text-[#F8FAFC]">Parsed Resume Structure</h2>
+              <p className="text-xs text-[#6B7280] dark:text-slate-400">Extracted from PyMuPDF & spaCy</p>
             </div>
             <button
               onClick={() => navigate('/upload-jd')}
-              className="px-5 py-2.5 rounded-xl bg-sky-500 text-white font-semibold text-xs hover:bg-sky-400 transition-colors flex items-center gap-2 shadow-lg shadow-sky-500/20"
+              className="btn-primary text-xs font-semibold flex items-center gap-2"
             >
               <span>Next: Add Job Description</span>
               <ArrowRight className="w-4 h-4" />
@@ -156,10 +169,12 @@ export default function ResumeUpload() {
 
           {/* Detected Skills */}
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-slate-300">Detected Technical Skills ({parsedResult.parsedData?.skills?.length || 0})</h4>
+            <h4 className="text-xs font-semibold text-[#374151] dark:text-slate-300">
+              Detected Technical Skills ({parsedResult.parsedData?.skills?.length || 0})
+            </h4>
             <div className="flex flex-wrap gap-2">
               {parsedResult.parsedData?.skills?.map((skill, idx) => (
-                <span key={idx} className="px-2.5 py-1 rounded-lg bg-sky-500/10 text-sky-400 text-xs font-medium border border-sky-500/20">
+                <span key={idx} className="px-2.5 py-1 rounded-lg bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-medium border border-[#3B82F6]/20">
                   {skill}
                 </span>
               ))}
@@ -168,12 +183,12 @@ export default function ResumeUpload() {
 
           {/* Raw JSON Accordion */}
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-slate-300">Structured Data Payload</h4>
-            <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-emerald-400 font-mono overflow-x-auto max-h-48">
+            <h4 className="text-xs font-semibold text-[#374151] dark:text-slate-300">Structured Data Payload</h4>
+            <pre className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#05070B] border border-[#E5E7EB] dark:border-white/[0.06] text-[11px] text-[#059669] dark:text-[#22C55E] font-mono overflow-x-auto max-h-48">
               {JSON.stringify(parsedResult.parsedData, null, 2)}
             </pre>
           </div>
-        </div>
+        </motion.div>
       )}
 
     </div>
