@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { analysisAPI } from '../services/api';
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { Sparkles, Download, CheckCircle2, Award, AlertTriangle, ExternalLink, GitCompare, ShieldCheck, Zap, FileText, Target } from 'lucide-react';
+import { Sparkles, CheckCircle2, Award, AlertTriangle, ExternalLink, GitCompare, ShieldCheck, Zap, FileText, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from "axios";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
@@ -28,37 +28,6 @@ export default function AnalysisResults() {
       toast.error('Failed to load analysis results.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDownload = async () => {
-    try {
-      const token = localStorage.getItem("cp_token");
-
-      const response = await axios.get(
-        `http://localhost:5000/report/${analysis._id}`,
-        {
-          responseType: "blob",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `CareerPilot_Report_${analysis._id}.pdf`;
-
-      document.body.appendChild(link);
-      link.click();
-
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to download report.");
     }
   };
 
@@ -139,13 +108,6 @@ export default function AnalysisResults() {
             <GitCompare className="w-4 h-4 text-[#8B5CF6]" />
             <span>Compare Versions</span>
           </Link>
-          <button
-            onClick={handleDownload}
-            className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition-colors shadow-lg"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download PDF Report</span>
-          </button>
         </div>
       </motion.div>
 

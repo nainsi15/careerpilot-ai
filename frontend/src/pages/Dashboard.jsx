@@ -3,14 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { analysisAPI, resumeAPI, jobAPI } from '../services/api';
-import { 
-  Sparkles, 
-  Upload, 
-  FileText, 
-  Award, 
-  TrendingUp, 
-  ArrowUpRight, 
-  History, 
+import {
+  Sparkles,
+  Upload,
+  FileText,
+  Award,
+  TrendingUp,
+  ArrowUpRight,
+  History,
   ShieldCheck,
   Target,
   FileSearch,
@@ -24,7 +24,7 @@ export default function Dashboard() {
 
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Quick Upload State
   const [resumeFile, setResumeFile] = useState(null);
   const [jdText, setJdText] = useState('');
@@ -96,7 +96,7 @@ export default function Dashboard() {
       // 3. Run Analysis
       const payload = { resumeId };
       if (jobId) payload.jobId = jobId;
-      
+
       const analysisRes = await analysisAPI.run(payload);
       toast.success('AI Analysis Completed Successfully!');
       navigate(`/analysis/${analysisRes.data.analysis._id}`);
@@ -114,9 +114,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8 py-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-slate-200">
-      
+
       {/* Header Banner */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col md:flex-row md:items-end justify-between gap-4"
@@ -132,7 +132,7 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Analyze Your Resume Card */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -145,7 +145,7 @@ export default function Dashboard() {
 
         <form onSubmit={handleQuickRun} className="space-y-6 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+
             {/* Left Column: Resume Upload */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-slate-300">Resume (PDF)</label>
@@ -213,11 +213,11 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Dashboard Metrics (from latest analysis) */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
       >
         {/* ATS Score */}
         <div className="p-5 space-y-2 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl">
@@ -264,64 +264,11 @@ export default function Dashboard() {
           {latestAnalysis?.resumeQuality?.Impact_Metrics && <div className="h-1 mt-3 rounded-full bg-white/[0.1]"><div className="h-full rounded-full bg-[#8B5CF6]" style={{ width: `${latestAnalysis.resumeQuality.Impact_Metrics}%` }} /></div>}
         </div>
 
-        {/* Detected Sections */}
-        <div className="p-5 space-y-2 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl">
-          <div className="flex items-center gap-2 text-slate-300">
-            <FileText className="w-4 h-4 text-[#F59E0B]" />
-            <span className="text-xs font-semibold uppercase tracking-wider">Detected Sections</span>
-          </div>
-          <p className="text-3xl font-bold text-white">
-            {latestAnalysis?.detectedSections ? `${latestAnalysis.detectedSections.length} / 5` : '—'}
-          </p>
-          <p className="text-xs text-slate-400">
-            {latestAnalysis?.detectedSections?.length >= 4 ? 'Complete' : latestAnalysis ? 'Missing Sections' : 'No data'}
-          </p>
-          {latestAnalysis?.detectedSections && <div className="h-1 mt-3 rounded-full bg-white/[0.1]"><div className="h-full rounded-full bg-[#F59E0B]" style={{ width: `${(latestAnalysis.detectedSections.length / 5) * 100}%` }} /></div>}
-        </div>
-      </motion.div>
 
-      {/* What You Can Do With CareerPilot AI */}
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="space-y-4"
-      >
-        <h2 className="text-base font-bold text-white px-2">What you can do with CareerPilot AI</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-xl flex flex-col gap-2 hover:bg-white/[0.04] transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-[#3B82F6]/20 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4 text-[#3B82F6]" />
-            </div>
-            <h3 className="text-sm font-semibold text-white">ATS Score</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">See how your resume performs against ATS criteria.</p>
-          </div>
-          <div className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-xl flex flex-col gap-2 hover:bg-white/[0.04] transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-[#EF4444]/20 flex items-center justify-center">
-              <FileSearch className="w-4 h-4 text-[#EF4444]" />
-            </div>
-            <h3 className="text-sm font-semibold text-white">Missing Skills</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Identify important skills missing from your resume.</p>
-          </div>
-          <div className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-xl flex flex-col gap-2 hover:bg-white/[0.04] transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-[#22C55E]/20 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-[#22C55E]" />
-            </div>
-            <h3 className="text-sm font-semibold text-white">Resume Improvements</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Get concise recommendations to improve your resume.</p>
-          </div>
-          <div className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-xl flex flex-col gap-2 hover:bg-white/[0.04] transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-[#8B5CF6]/20 flex items-center justify-center">
-              <GitCompare className="w-4 h-4 text-[#8B5CF6]" />
-            </div>
-            <h3 className="text-sm font-semibold text-white">Compare Versions</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">Compare different resume versions and track improvements.</p>
-          </div>
-        </div>
       </motion.div>
 
       {/* Recent Analyses List */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}

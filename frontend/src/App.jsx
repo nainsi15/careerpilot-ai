@@ -1,10 +1,20 @@
 import React from 'react';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+  useLocation
+} from 'react-router-dom';
+
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Toaster } from 'sonner';
+
 import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import Sidebar from './components/Sidebar';
+import DashboardBackground from './components/DashboardBackground';
+
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -14,48 +24,68 @@ import AnalysisHistory from './pages/AnalysisHistory';
 import VersionCompare from './pages/VersionCompare';
 import Settings from './pages/Settings';
 
-import Sidebar from './components/Sidebar';
-import DashboardBackground from './components/DashboardBackground';
+
+/* =========================
+   AUTHENTICATED LAYOUT
+========================= */
 
 const AuthenticatedLayout = () => {
   const { user, loading } = useAuth();
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F5F7FB] dark:bg-[#05070B] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#3B82F6] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#05070B] flex items-center justify-center text-white">
+        Loading...
       </div>
     );
   }
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
+
   return (
     <DashboardBackground>
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <Navbar />
-        <main className="flex-1 overflow-y-auto">
+      <div className="min-h-screen flex">
+
+        {/* Sidebar */}
+        <aside className="w-60 flex-shrink-0 border-r border-white/[0.08]">
+          <Sidebar />
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 min-w-0">
           <Outlet />
         </main>
+
       </div>
     </DashboardBackground>
   );
 };
 
+
+/* =========================
+   PUBLIC LAYOUT
+========================= */
+
 const PublicLayout = () => {
   const { user } = useAuth();
+  const location = useLocation();
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#F5F7FB] dark:bg-transparent text-[#111827] dark:text-[#F8FAFC] font-sans transition-colors duration-250">
-      <Navbar />
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <main className="flex-1 overflow-y-auto">
-          <Outlet />
-        </main>
-        {!user && <Footer />}
-      </div>
-    </div>
+    <>
+      {/* Hide Navbar only on Landing page */}
+      {location.pathname !== '/' && <Navbar />}
+
+      <Outlet />
+    </>
   );
 };
+
+
+/* =========================
+   APP CONTENT
+========================= */
 
 function AppContent() {
   const { theme } = useTheme();
@@ -63,12 +93,16 @@ function AppContent() {
   return (
     <>
       <Routes>
+
+        {/* Public Pages */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Route>
-        
+
+
+        {/* Protected Pages */}
         <Route element={<AuthenticatedLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/analysis/:id" element={<AnalysisResults />} />
@@ -76,11 +110,26 @@ function AppContent() {
           <Route path="/compare" element={<VersionCompare />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
+
+
+        {/* Unknown Route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
-      <Toaster position="top-right" theme={theme === 'dark' ? 'dark' : 'light'} richColors />
+
+      <Toaster
+        position="top-right"
+        theme={theme === 'dark' ? 'dark' : 'light'}
+        richColors
+      />
     </>
   );
 }
+
+
+/* =========================
+   APP
+========================= */
 
 export default function App() {
   return (
