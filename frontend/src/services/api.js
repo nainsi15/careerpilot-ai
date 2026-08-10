@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = '/api';
+const API_BASE = 'https://careerpilot-ai-4yvk.onrender.com';
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -9,13 +9,18 @@ const api = axios.create({
   }
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('cp_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => Promise.reject(error));
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('cp_token');
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
@@ -23,9 +28,12 @@ export const authAPI = {
 };
 
 export const resumeAPI = {
-  upload: (formData) => api.post('/resume/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
+  upload: (formData) =>
+    api.post('/resume/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
 };
 
 export const jobAPI = {
@@ -36,7 +44,8 @@ export const analysisAPI = {
   run: (data) => api.post('/analysis/run', data),
   getHistory: () => api.get('/analysis/history'),
   getById: (id) => api.get(`/analysis/${id}`),
-  compare: (id1, id2) => api.get(`/analysis/compare?id1=${id1}&id2=${id2}`)
+  compare: (id1, id2) =>
+    api.get(`/analysis/compare?id1=${id1}&id2=${id2}`)
 };
 
 export const reportAPI = {
