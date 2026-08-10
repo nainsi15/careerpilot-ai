@@ -72,18 +72,21 @@ router.post('/run', auth, async (req, res) => {
       jobId: job._id,
       
       atsScore: analysisResult.ats_score,
-      skillScore: analysisResult.skill_score,
       semanticSimilarity: analysisResult.semantic_similarity,
-      sectionScore: analysisResult.section_score,
-      impactScore: analysisResult.impact_score,
+      technicalSkills: analysisResult.technical_skills,
+      resumeStructure: analysisResult.resume_structure,
+      experienceRelevance: analysisResult.experience_relevance,
+      sectionCompleteness: analysisResult.section_completeness,
       
       shortlistReadiness: analysisResult.shortlist_readiness,
       detectedSections: analysisResult.detected_sections,
       strongSkills: analysisResult.strong_skills,
       missingSkills: analysisResult.missing_skills,
-      rewrittenBullets: analysisResult.rewritten_bullets,
-      recruiterFeedback: analysisResult.recruiter_feedback,
-      recommendations: analysisResult.recommendations,
+      strengths: analysisResult.strengths,
+      weaknesses: analysisResult.weaknesses,
+      recommendedImprovements: analysisResult.recommended_improvements,
+      resumeQuality: analysisResult.resume_quality,
+      techSkillProfile: analysisResult.tech_skill_profile,
       roadmap: analysisResult.roadmap
     });
 

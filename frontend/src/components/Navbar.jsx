@@ -30,8 +30,6 @@ export default function Navbar() {
 
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'Resume', path: '/upload-resume', icon: FileText },
-    { label: 'Job Match', path: '/upload-jd', icon: Briefcase },
     { label: 'History', path: '/history', icon: History },
     { label: 'Compare', path: '/compare', icon: GitCompare },
   ];
@@ -41,44 +39,19 @@ export default function Navbar() {
       <nav className="sticky top-0 z-50 border-b border-[#E5E7EB] dark:border-white/[0.06] bg-white/90 dark:bg-[#05070B]/90 backdrop-blur-xl shadow-sm transition-colors duration-250">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           
-          {/* Left Section: Brand Logo & Navigation */}
+          {/* Left Section: Brand Logo (Only for Unauthenticated) */}
           <div className="flex items-center gap-8">
-            <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#3B82F6] to-[#6366F1] p-[1px] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-200">
-                <div className="w-full h-full bg-white dark:bg-[#05070B] rounded-[11px] flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-[#3B82F6]" />
+            {!user && (
+              <Link to="/" className="flex items-center gap-2.5 group">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#3B82F6] to-[#6366F1] p-[1px] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-200">
+                  <div className="w-full h-full bg-white dark:bg-[#05070B] rounded-[11px] flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-[#3B82F6]" />
+                  </div>
                 </div>
-              </div>
-              <span className="text-base font-bold tracking-tight text-[#111827] dark:text-[#F8FAFC]">
-                CareerPilot<span className="text-[#3B82F6] ml-0.5">.ai</span>
-              </span>
-            </Link>
-
-            {/* Navigation Links */}
-            {user && (
-              <div className="hidden md:flex items-center gap-1 bg-[#F1F5F9] dark:bg-[#0B1220]/70 p-1 rounded-xl border border-[#E5E7EB] dark:border-white/[0.06]">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.path);
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                        active
-                          ? 'bg-[#3B82F6] text-white shadow-sm font-semibold'
-                          : 'text-[#4B5563] dark:text-slate-400 hover:text-[#111827] dark:hover:text-slate-200 hover:bg-white dark:hover:bg-white/[0.04]'
-                      }`}
-                    >
-                      {active && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                      )}
-                      <Icon className={`w-3.5 h-3.5 ${active ? 'text-white' : 'text-[#4B5563] dark:text-slate-400'}`} />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
+                <span className="text-base font-bold tracking-tight text-[#111827] dark:text-[#F8FAFC]">
+                  CareerPilot<span className="text-[#3B82F6] ml-0.5">.ai</span>
+                </span>
+              </Link>
             )}
           </div>
 

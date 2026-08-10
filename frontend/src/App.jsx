@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Toaster } from 'sonner';
@@ -9,14 +9,15 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import ResumeUpload from './pages/ResumeUpload';
-import JobUpload from './pages/JobUpload';
 import AnalysisResults from './pages/AnalysisResults';
 import AnalysisHistory from './pages/AnalysisHistory';
 import VersionCompare from './pages/VersionCompare';
 import Settings from './pages/Settings';
 
-const ProtectedRoute = ({ children }) => {
+import Sidebar from './components/Sidebar';
+import DashboardBackground from './components/DashboardBackground';
+
+const AuthenticatedLayout = () => {
   const { user, loading } = useAuth();
   if (loading) {
     return (
@@ -28,33 +29,56 @@ const ProtectedRoute = ({ children }) => {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  return children;
+  return (
+    <DashboardBackground>
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        <Navbar />
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
+    </DashboardBackground>
+  );
+};
+
+const PublicLayout = () => {
+  const { user } = useAuth();
+  return (
+    <div className="min-h-screen flex flex-col bg-[#F5F7FB] dark:bg-transparent text-[#111827] dark:text-[#F8FAFC] font-sans transition-colors duration-250">
+      <Navbar />
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+        {!user && <Footer />}
+      </div>
+    </div>
+  );
 };
 
 function AppContent() {
   const { theme } = useTheme();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F5F7FB] dark:bg-[#05070B] text-[#111827] dark:text-[#F8FAFC] font-sans transition-colors duration-250">
-      <Navbar />
-      <main className="flex-1">
-        <Routes>
+    <>
+      <Routes>
+        <Route element={<PublicLayout />}>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/upload-resume" element={<ProtectedRoute><ResumeUpload /></ProtectedRoute>} />
-          <Route path="/upload-jd" element={<ProtectedRoute><JobUpload /></ProtectedRoute>} />
-          <Route path="/analysis/:id" element={<ProtectedRoute><AnalysisResults /></ProtectedRoute>} />
-          <Route path="/history" element={<ProtectedRoute><AnalysisHistory /></ProtectedRoute>} />
-          <Route path="/compare" element={<ProtectedRoute><VersionCompare /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        </Routes>
-      </main>
-      <Footer />
+        </Route>
+        
+        <Route element={<AuthenticatedLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/analysis/:id" element={<AnalysisResults />} />
+          <Route path="/history" element={<AnalysisHistory />} />
+          <Route path="/compare" element={<VersionCompare />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
+      </Routes>
       <Toaster position="top-right" theme={theme === 'dark' ? 'dark' : 'light'} richColors />
-    </div>
+    </>
   );
 }
 
