@@ -7,10 +7,11 @@ const analysisSchema = new mongoose.Schema({
   jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'JobDescription', required: true },
   
   atsScore: { type: Number, required: true },
-  skillScore: { type: Number, default: 0 },
-  semanticSimilarity: { type: Number, required: true },
-  sectionScore: { type: Number, default: 0 },
-  impactScore: { type: Number, default: 0 },
+  semanticSimilarity: { type: Number }, // Optional, only if JD is present
+  technicalSkills: { type: Number, default: 0 },
+  resumeStructure: { type: Number, default: 0 },
+  experienceRelevance: { type: Number, default: 0 },
+  sectionCompleteness: { type: Number, default: 0 },
   
   shortlistReadiness: { type: String, required: true },
   detectedSections: [{ type: String }],
@@ -22,17 +23,31 @@ const analysisSchema = new mongoose.Schema({
       learning_link: String
     }
   ],
-  rewrittenBullets: [
+  strengths: { type: [String], default: [] },
+  weaknesses: { type: [String], default: [] },
+  recommendedImprovements: [
     {
-      original: String,
-      improved: String,
-      impact_factor: String
+      title: String,
+      why_it_matters: String,
+      what_to_change: String
     }
   ],
-  recruiterFeedback: { type: String },
-  recommendations: [{ type: String }],
-
-  
+  resumeQuality: {
+    content_quality: Number,
+    technical_skills: Number,
+    projects: Number,
+    experience: Number,
+    achievements: Number,
+    formatting: Number,
+    clarity: Number
+  },
+  techSkillProfile: {
+    frontend: { type: [String], default: [] },
+    backend: { type: [String], default: [] },
+    database: { type: [String], default: [] },
+    cloud: { type: [String], default: [] },
+    ai_ml: { type: [String], default: [] }
+  },  
   roadmap: [
 {
     week: Number,

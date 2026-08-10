@@ -1,8 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { analysisAPI, resumeAPI, jobAPI } from '../services/api';
-import { Sparkles, Upload, FileText, Briefcase, Award, TrendingUp, ArrowUpRight, History, CheckCircle2, AlertTriangle, ArrowRight, Zap, RefreshCw } from 'lucide-react';
+import {
+  Sparkles,
+  Upload,
+  FileText,
+  Award,
+  TrendingUp,
+  ArrowUpRight,
+  History,
+  ShieldCheck,
+  Target,
+  FileSearch,
+  GitCompare
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Dashboard() {
@@ -11,7 +24,7 @@ export default function Dashboard() {
 
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Quick Upload State
   const [resumeFile, setResumeFile] = useState(null);
   const [jdText, setJdText] = useState('');
@@ -20,16 +33,16 @@ export default function Dashboard() {
 
   const [currentStep, setCurrentStep] = useState(0);
 
-const analysisSteps = [
-  "Uploading Resume...",
-  "Extracting Resume Text...",
-  "Parsing Resume Sections...",
-  "Processing Job Description...",
-  "Matching Skills...",
-  "Computing ATS Score...",
-  "Generating AI Insights...",
-  "Preparing Report..."
-];
+  const analysisSteps = [
+    "Uploading Resume...",
+    "Extracting Resume Text...",
+    "Parsing Resume Sections...",
+    "Processing Job Description...",
+    "Matching Skills...",
+    "Computing ATS Score...",
+    "Generating AI Insights...",
+    "Preparing Report..."
+  ];
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -49,28 +62,22 @@ const analysisSteps = [
   }, []);
 
   const handleQuickRun = async (e) => {
-    
     e.preventDefault();
     if (!resumeFile) {
       toast.error('Please select a resume file (PDF or DOCX)');
       return;
     }
-    if (!jdText.trim()) {
-      toast.error('Please paste or enter a job description');
-      return;
-    }
 
     setUploading(true);
-
     setCurrentStep(0);
 
-const interval = setInterval(() => {
-  setCurrentStep(prev => {
-    if (prev < analysisSteps.length - 1)
-      return prev + 1;
-    return prev;
-  });
-}, 2500);
+    const interval = setInterval(() => {
+      setCurrentStep(prev => {
+        if (prev < analysisSteps.length - 1)
+          return prev + 1;
+        return prev;
+      });
+    }, 2500);
 
     try {
       // 1. Upload Resume
@@ -79,12 +86,18 @@ const interval = setInterval(() => {
       const resumeRes = await resumeAPI.upload(resumeFormData);
       const resumeId = resumeRes.data.resumeId;
 
-      // 2. Upload Job Description
-      const jobRes = await jobAPI.upload({ title: jdTitle || 'Quick Analysis Job', rawText: jdText });
-      const jobId = jobRes.data.jobId;
+      // 2. Upload Job Description (Optional)
+      let jobId = null;
+      if (jdText.trim()) {
+        const jobRes = await jobAPI.upload({ title: jdTitle || 'Custom Job Description', rawText: jdText });
+        jobId = jobRes.data.jobId;
+      }
 
       // 3. Run Analysis
-      const analysisRes = await analysisAPI.run({ resumeId, jobId });
+      const payload = { resumeId };
+      if (jobId) payload.jobId = jobId;
+
+      const analysisRes = await analysisAPI.run(payload);
       toast.success('AI Analysis Completed Successfully!');
       navigate(`/analysis/${analysisRes.data.analysis._id}`);
     } catch (err) {
@@ -92,252 +105,247 @@ const interval = setInterval(() => {
       toast.error(err.response?.data?.error || 'Failed to complete quick analysis');
     } finally {
       clearInterval(interval);
-setCurrentStep(0);
+      setCurrentStep(0);
       setUploading(false);
     }
   };
 
-  // Metrics calculation
-  const totalAnalyses = history.length;
-  const avgAts = totalAnalyses > 0 ? Math.round(history.reduce((acc, curr) => acc + curr.atsScore, 0) / totalAnalyses) : 0;
-  const highestMatch = totalAnalyses > 0 ? Math.max(...history.map(h => h.atsScore)) : 0;
   const latestAnalysis = history.length > 0 ? history[0] : null;
 
   return (
-    <div className="space-y-8 py-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
+    <div className="space-y-8 py-8 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-slate-200">
+
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-6 rounded-2xl border border-slate-800 relative overflow-hidden">
-        <div className="space-y-1 z-10">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-sky-400 bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Target Role: {user?.targetRole || 'Software Engineer'}</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white">Welcome back, {user?.name}!</h1>
-          <p className="text-xs text-slate-400">Track your ATS match score, upload iterations, and close technical skill gaps.</p>
-        </div>
-
-        <div className="flex items-center gap-3 z-10">
-          <button
-            onClick={fetchDashboardData}
-            className="p-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white transition-colors"
-            title="Refresh Data"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-          <Link
-            to="/upload-resume"
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-sky-500/20 hover:brightness-110 transition-all flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            <span>New Analysis</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* Metrics Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Average ATS Score</span>
-            <Award className="w-4 h-4 text-sky-400" />
-          </div>
-          <p className="text-3xl font-extrabold text-white">{avgAts}%</p>
-          <p className="text-[11px] text-slate-400 flex items-center gap-1">
-            <span className="text-emerald-400 font-semibold">Across {totalAnalyses} runs</span>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-end justify-between gap-4"
+      >
+        <div className="space-y-2 z-10">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            Welcome back, {user?.name} 👋
+          </h1>
+          <p className="text-sm text-slate-400 max-w-xl">
+            Analyze your resume against a job description and get clear, actionable improvements.
           </p>
         </div>
+      </motion.div>
 
-        <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Highest Job Match</span>
-            <TrendingUp className="w-4 h-4 text-emerald-400" />
-          </div>
-          <p className="text-3xl font-extrabold text-white">{highestMatch}%</p>
-          <p className="text-[11px] text-slate-400">Best performing resume</p>
+      {/* Analyze Your Resume Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="p-6 sm:p-8 space-y-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl shadow-2xl backdrop-blur-2xl relative overflow-hidden"
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <FileText className="w-5 h-5 text-[#3B82F6]" />
+          <h2 className="text-lg font-bold text-white">Analyze Your Resume</h2>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Shortlist Status</span>
-            <Zap className="w-4 h-4 text-purple-400" />
-          </div>
-          <p className="text-lg font-bold text-white truncate">
-            {latestAnalysis ? latestAnalysis.shortlistReadiness : 'No Data'}
-          </p>
-          <p className="text-[11px] text-slate-400">Latest analysis status</p>
-        </div>
+        <form onSubmit={handleQuickRun} className="space-y-6 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Total Analyses</span>
-            <History className="w-4 h-4 text-indigo-400" />
-          </div>
-          <p className="text-3xl font-extrabold text-white">{totalAnalyses}</p>
-          <p className="text-[11px] text-slate-400">Saved in cloud history</p>
-        </div>
-
-      </div>
-
-      {/* Main Grid: Quick Upload Widget & Recent Analyses */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Quick Upload Widget (1 Col) */}
-        <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-              <Zap className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-white">Quick Match Analysis</h2>
-              <p className="text-[11px] text-slate-400">Upload PDF & paste job text</p>
-            </div>
-          </div>
-
-          <form onSubmit={handleQuickRun} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Resume File (PDF/DOCX)</label>
-              <input
-                type="file"
-                accept=".pdf,.docx,.doc"
-                onChange={(e) => setResumeFile(e.target.files[0])}
-                className="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-sky-500/10 file:text-sky-400 hover:file:bg-sky-500/20 cursor-pointer"
-              />
+            {/* Left Column: Resume Upload */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-300">Resume (PDF)</label>
+              <div className="border border-dashed border-white/[0.15] bg-white/[0.02] rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-white/[0.05] hover:border-white/[0.25] transition-colors h-48 relative">
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.doc"
+                  onChange={(e) => setResumeFile(e.target.files[0])}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  title="Upload Resume"
+                />
+                <Upload className="w-8 h-8 text-slate-400 mb-3" />
+                {resumeFile ? (
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-white">{resumeFile.name}</p>
+                    <p className="text-xs text-slate-400">Click to change</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1 text-sm text-slate-400">
+                    <p>Drag & drop your resume here</p>
+                    <p className="text-xs text-slate-500">or</p>
+                    <span className="inline-block mt-2 px-4 py-1.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer">
+                      Browse Files
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Target Role / Title (Optional)</label>
-              <input
-                type="text"
-                placeholder="e.g. Senior Frontend Developer"
-                value={jdTitle}
-                onChange={(e) => setJdTitle(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-white focus:outline-none focus:border-sky-500"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Job Description Text</label>
+            {/* Right Column: Job Description */}
+            <div className="space-y-2 flex flex-col">
+              <label className="text-xs font-semibold text-slate-300">Job Description (Optional)</label>
               <textarea
-                rows={4}
-                placeholder="Paste the job description or requirements here..."
+                placeholder="Paste the job description here..."
                 value={jdText}
                 onChange={(e) => setJdText(e.target.value)}
-                className="w-full p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-white focus:outline-none focus:border-sky-500 placeholder:text-slate-600 resize-none"
+                className="w-full p-4 text-sm resize-none flex-1 min-h-[12rem] bg-white/[0.02] border border-white/[0.1] rounded-xl text-slate-200 focus:outline-none focus:border-[#3B82F6]/50 focus:ring-1 focus:ring-[#3B82F6]/50 transition-all placeholder:text-slate-500"
               />
+              <div className="text-[10px] text-right text-slate-500">
+                {jdText.length} / 5000 characters
+              </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={uploading}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-white font-semibold text-xs hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-sky-500/20 transition-all flex items-center justify-center gap-2"
-            >
-              {uploading ? (
-    <div className="flex items-center gap-2">
-        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-
-        <span>{analysisSteps[currentStep]}</span>
-    </div>
-) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Run AI Match Engine</span>
-                </>
-              )}
-            </button>
-          </form>
-        </div>
-
-        {/* Recent Analyses List (2 Cols) */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-bold text-white">Recent Resume Analyses</h2>
-                <p className="text-xs text-slate-400">Populated from backend database</p>
-              </div>
-              <Link to="/history" className="text-xs text-sky-400 hover:underline flex items-center gap-1">
-                <span>View All</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {loading ? (
-              <div className="py-12 text-center text-slate-500 space-y-2">
-                <div className="w-6 h-6 border-2 border-sky-400 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-xs">Loading analyses...</p>
-              </div>
-            ) : history.length === 0 ? (
-              <div className="py-12 text-center border border-dashed border-slate-800 rounded-xl space-y-3">
-                <FileText className="w-8 h-8 text-slate-600 mx-auto" />
-                <p className="text-xs text-slate-400">No analyses run yet. Use the Quick Match tool to get started!</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-800/80">
-                {history.slice(0, 5).map((item) => (
-                  <div key={item._id} className="py-3.5 flex items-center justify-between hover:bg-slate-900/40 px-2 rounded-xl transition-colors">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-white">
-                          {item.jobId?.title || 'Target Job Role'}
-                        </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
-                          v{item.resumeId?.version || 1}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 flex items-center gap-2">
-                        <span>{item.resumeId?.originalFilename || 'Resume.pdf'}</span>
-                        <span>&bull;</span>
-                        <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className="text-base font-extrabold text-sky-400">
-                          {item.atsScore}% <span className="text-[10px] text-slate-400 font-normal">ATS</span>
-                        </div>
-                        <div className="text-[10px] text-emerald-400">
-                          {item.semanticSimilarity}% Semantic
-                        </div>
-                      </div>
-
-                      <Link
-                        to={`/analysis/${item._id}`}
-                        className="p-2 rounded-lg bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 border border-sky-500/20 transition-colors"
-                      >
-                        <ArrowUpRight className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Latest Recommendations Teaser */}
-          {latestAnalysis && latestAnalysis.recommendations && (
-            <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span>Latest AI Recommendations</span>
-              </h3>
-              <ul className="space-y-2">
-                {latestAnalysis.recommendations.map((rec, idx) => (
-                  <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <button
+            type="submit"
+            disabled={uploading}
+            className="w-full py-3.5 text-sm font-semibold flex items-center justify-center gap-2 rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all"
+            style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)' }}
+          >
+            {uploading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>{analysisSteps[currentStep]}</span>
+              </div>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                <span>Analyze Resume</span>
+              </>
+            )}
+          </button>
+        </form>
+      </motion.div>
 
+      {/* Dashboard Metrics (from latest analysis) */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+      >
+        {/* ATS Score */}
+        <div className="p-5 space-y-2 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl">
+          <div className="flex items-center gap-2 text-slate-300">
+            <ShieldCheck className="w-4 h-4 text-[#3B82F6]" />
+            <span className="text-xs font-semibold uppercase tracking-wider">Overall ATS Score</span>
+          </div>
+          <p className="text-3xl font-bold text-white">
+            {latestAnalysis?.atsScore ? `${latestAnalysis.atsScore}%` : '—'}
+          </p>
+          <p className="text-xs text-slate-400">
+            {latestAnalysis?.atsScore >= 80 ? 'Competitive' : latestAnalysis?.atsScore >= 50 ? 'Good' : latestAnalysis ? 'Needs Work' : 'No data'}
+          </p>
+          {latestAnalysis?.atsScore && <div className="h-1 mt-3 rounded-full bg-white/[0.1]"><div className="h-full rounded-full bg-[#3B82F6]" style={{ width: `${latestAnalysis.atsScore}%` }} /></div>}
         </div>
 
-      </div>
+        {/* JD Match */}
+        <div className="p-5 space-y-2 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl">
+          <div className="flex items-center gap-2 text-slate-300">
+            <Target className="w-4 h-4 text-[#22C55E]" />
+            <span className="text-xs font-semibold uppercase tracking-wider">Job Description Match</span>
+          </div>
+          <p className="text-3xl font-bold text-white">
+            {latestAnalysis?.semanticSimilarity ? `${latestAnalysis.semanticSimilarity}%` : '—'}
+          </p>
+          <p className="text-xs text-slate-400">
+            {!latestAnalysis ? 'No data' : !latestAnalysis.jobId ? 'Job description not provided' : latestAnalysis.semanticSimilarity >= 80 ? 'Good Match' : latestAnalysis.semanticSimilarity >= 50 ? 'Fair Match' : 'Low Match'}
+          </p>
+          {latestAnalysis?.semanticSimilarity && <div className="h-1 mt-3 rounded-full bg-white/[0.1]"><div className="h-full rounded-full bg-[#22C55E]" style={{ width: `${latestAnalysis.semanticSimilarity}%` }} /></div>}
+        </div>
+
+        {/* Resume Quality */}
+        <div className="p-5 space-y-2 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl">
+          <div className="flex items-center gap-2 text-slate-300">
+            <Award className="w-4 h-4 text-[#8B5CF6]" />
+            <span className="text-xs font-semibold uppercase tracking-wider">Resume Quality</span>
+          </div>
+          <p className="text-3xl font-bold text-white">
+            {latestAnalysis?.resumeQuality?.Impact_Metrics ? `${latestAnalysis.resumeQuality.Impact_Metrics}%` : '—'}
+          </p>
+          <p className="text-xs text-slate-400">
+            {latestAnalysis?.resumeQuality?.Impact_Metrics >= 80 ? 'Strong' : latestAnalysis ? 'Average' : 'No data'}
+          </p>
+          {latestAnalysis?.resumeQuality?.Impact_Metrics && <div className="h-1 mt-3 rounded-full bg-white/[0.1]"><div className="h-full rounded-full bg-[#8B5CF6]" style={{ width: `${latestAnalysis.resumeQuality.Impact_Metrics}%` }} /></div>}
+        </div>
+
+
+      </motion.div>
+
+      {/* Recent Analyses List */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl space-y-4"
+      >
+        <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+          <div className="flex items-center gap-2">
+            <History className="w-5 h-5 text-slate-400" />
+            <h2 className="text-base font-bold text-white">Recent Analyses</h2>
+          </div>
+          <Link to="/history" className="text-xs text-[#3B82F6] hover:text-[#60A5FA] hover:underline flex items-center gap-1 font-semibold transition-colors">
+            <span>View All</span>
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="py-12 text-center text-slate-400 space-y-2">
+            <div className="w-6 h-6 border-2 border-[#3B82F6] border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs">Loading analyses...</p>
+          </div>
+        ) : history.length === 0 ? (
+          <div className="py-12 text-center border border-dashed border-white/[0.1] rounded-xl space-y-3">
+            <FileText className="w-8 h-8 text-slate-500 mx-auto" />
+            <p className="text-xs text-slate-400">No analyses run yet. Upload your resume to get started.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead>
+                <tr className="text-xs text-slate-400 border-b border-white/[0.08]">
+                  <th className="py-3 font-semibold">Resume</th>
+                  <th className="py-3 font-semibold">Target Role</th>
+                  <th className="py-3 font-semibold">ATS Score</th>
+                  <th className="py-3 font-semibold">JD Match</th>
+                  <th className="py-3 font-semibold">Analyzed On</th>
+                  <th className="py-3 font-semibold text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.06]">
+                {history.slice(0, 5).map((item) => (
+                  <tr key={item._id} className="hover:bg-white/[0.02] transition-colors group">
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-slate-500" />
+                        <span className="font-medium text-slate-200">
+                          {item.resumeId?.originalFilename || 'Resume.pdf'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 text-slate-300">
+                      {item.jobId?.title || 'Target Job Role'}
+                    </td>
+                    <td className="py-3">
+                      <span className="text-white font-bold">{item.atsScore}%</span>
+                    </td>
+                    <td className="py-3">
+                      <span className="text-white font-bold">{item.semanticSimilarity || 0}%</span>
+                    </td>
+                    <td className="py-3 text-slate-400 text-xs">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 text-right">
+                      <Link
+                        to={`/analysis/${item._id}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.1] text-xs font-semibold text-slate-300 hover:bg-white/[0.05] hover:text-white transition-colors"
+                      >
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                        <span>View Analysis</span>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </motion.div>
 
     </div>
   );

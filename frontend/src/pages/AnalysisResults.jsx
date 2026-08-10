@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { analysisAPI, reportAPI } from '../services/api';
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
-import { Sparkles, Download, CheckCircle2, AlertTriangle, ExternalLink, ArrowRight, GitCompare, RefreshCw, FileText, Award, ShieldCheck, Zap, Layers } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { analysisAPI } from '../services/api';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { Sparkles, CheckCircle2, Award, AlertTriangle, ExternalLink, GitCompare, ShieldCheck, Zap, FileText, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from "axios";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
@@ -12,7 +13,6 @@ export default function AnalysisResults() {
   const { id } = useParams();
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview'); // overview, bullets, recruiter
 
   useEffect(() => {
     fetchAnalysis();
@@ -30,42 +30,12 @@ export default function AnalysisResults() {
       setLoading(false);
     }
   };
-  const handleDownload = async () => {
-  try {
-    const token = localStorage.getItem("cp_token");
 
-    const response = await axios.get(
-      `http://localhost:5000/report/${analysis._id}`,
-      {
-        responseType: "blob",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `CareerPilot_Report_${analysis._id}.pdf`;
-
-    document.body.appendChild(link);
-    link.click();
-
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to download report.");
-  }
-};
- if (loading) {
+  if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
-        <div className="w-10 h-10 border-4 border-sky-400 border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-semibold text-slate-300">Executing Explainable AI Analysis Pipeline...</p>
-        <p className="text-xs text-slate-500">Calculating Sentence Vector Cosine Similarity & Deterministic ATS Math</p>
+        <div className="w-8 h-8 border-2 border-[#3B82F6] border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm font-semibold text-white">Analyzing your resume...</p>
       </div>
     );
   }
@@ -73,9 +43,9 @@ export default function AnalysisResults() {
   if (!analysis) {
     return (
       <div className="py-20 text-center space-y-4 max-w-md mx-auto">
-        <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto" />
+        <AlertTriangle className="w-12 h-12 text-[#EF4444] mx-auto" />
         <h2 className="text-xl font-bold text-white">Analysis Not Found</h2>
-        <Link to="/dashboard" className="inline-block px-4 py-2 bg-sky-500 text-white rounded-xl text-xs font-semibold">
+        <Link to="/dashboard" className="px-4 py-2 bg-[#3B82F6] text-white rounded-lg text-xs font-semibold inline-block">
           Return to Dashboard
         </Link>
       </div>
@@ -83,329 +53,301 @@ export default function AnalysisResults() {
   }
 
   const radarData = [
-    { subject: 'Skill Overlap', value: analysis.skillScore || 0, fullMark: 100 },
-    { subject: 'Semantic Vector', value: analysis.semanticSimilarity || 0, fullMark: 100 },
-    { subject: 'Section Count', value: analysis.sectionScore || 0, fullMark: 100 },
-    { subject: 'Action Impact', value: analysis.impactScore || 0, fullMark: 100 },
+    { subject: 'Keyword Match', value: analysis.semanticSimilarity || 0, fullMark: 100 },
+    { subject: 'Technical Skills', value: analysis.technicalSkills || 0, fullMark: 100 },
+    { subject: 'Resume Structure', value: analysis.resumeStructure || 0, fullMark: 100 },
+    { subject: 'Experience Relevance', value: analysis.experienceRelevance || 0, fullMark: 100 },
+    { subject: 'Section Completeness', value: analysis.sectionCompleteness || 0, fullMark: 100 },
   ];
 
   const getScoreColor = (score) => {
-    if (score >= 80) return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
-    if (score >= 60) return 'text-sky-400 border-sky-500/30 bg-sky-500/10';
-    return 'text-amber-400 border-amber-500/30 bg-amber-500/10';
+    if (score >= 80) return 'text-[#22C55E] border-[#22C55E]/30 bg-[#22C55E]/10'; // Green
+    if (score >= 60) return 'text-[#EAB308] border-[#EAB308]/30 bg-[#EAB308]/10'; // Yellow
+    return 'text-[#EF4444] border-[#EF4444]/30 bg-[#EF4444]/10'; // Red
+  };
+
+  const getScoreColorText = (score) => {
+    if (score >= 80) return 'text-[#22C55E]';
+    if (score >= 60) return 'text-[#EAB308]';
+    return 'text-[#EF4444]';
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      
-      {/* Top Header Card */}
-      <div className="glass-card p-6 rounded-2xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-slate-200">
+
+      {/* 1. Header Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6 sm:p-8 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-6"
+      >
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-slate-400 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800">
-              Run ID: {analysis._id.slice(-6)}
-            </span>
-            <span className="text-xs font-semibold text-sky-400 bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">
-              Target: {analysis.jobId?.title || 'Target Job'}
-            </span>
+          <h1 className="text-2xl font-bold tracking-tight text-white">AI Resume Analysis & ATS Report</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-[#3B82F6]" />
+              Resume: <span className="text-white font-medium">{analysis.resumeId?.originalFilename || 'Resume.pdf'}</span>
+            </div>
+            <div className="hidden sm:block text-slate-600">•</div>
+            <div className="flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5 text-[#8B5CF6]" />
+              Target Role: <span className="text-white font-medium">{analysis.jobId?.title || 'Not provided'}</span>
+            </div>
+            <div className="hidden sm:block text-slate-600">•</div>
+            <div>
+              Analyzed: <span className="text-white font-medium">{new Date(analysis.createdAt).toLocaleDateString()}</span>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white">AI Resume Analysis & ATS Report</h1>
-          <p className="text-xs text-slate-400">
-            Resume: <span className="text-slate-200 font-medium">{analysis.resumeId?.originalFilename || 'Resume.pdf'}</span> &bull; 
-            Analyzed on {new Date(analysis.createdAt).toLocaleDateString()}
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <Link
             to="/compare"
-            className="px-4 py-2.5 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-300 text-xs font-semibold hover:text-white transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] rounded-lg text-xs font-semibold flex items-center gap-2 text-white transition-colors"
           >
-            <GitCompare className="w-4 h-4 text-purple-400" />
+            <GitCompare className="w-4 h-4 text-[#8B5CF6]" />
             <span>Compare Versions</span>
           </Link>
-
-         <button
-  onClick={handleDownload}
-  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-white font-semibold text-xs hover:brightness-110 shadow-lg shadow-sky-500/20 transition-all flex items-center gap-2"
->
-            <Download className="w-4 h-4" />
-            <span>Download PDF Report</span>
-          </button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Hero Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        
+      {/* 2. Top Score Cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
         {/* ATS Score Gauge */}
-        <div className="glass-card p-6 rounded-2xl border border-slate-800 text-center space-y-2 flex flex-col justify-center">
-          <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Overall ATS Score</span>
-         <div className="w-28 h-28 mx-auto">
-
-<CircularProgressbar
-    value={analysis.atsScore}
-    text={`${analysis.atsScore}%`}
-    styles={buildStyles({
-        textColor: "#ffffff",
-        pathColor: "#38bdf8",
-        trailColor: "#1e293b",
-        textSize: "18px",
-    })}
-/>
-
-</div>
-          <div className={`text-xs px-3 py-1 rounded-full border mx-auto font-semibold ${getScoreColor(analysis.atsScore)}`}>
-            {analysis.atsScore >= 80 ? 'Optimal ATS Rank' : analysis.atsScore >= 60 ? 'Competitive' : 'Needs Optimization'}
-          </div>
+        <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl text-center flex flex-col justify-between items-center gap-3">
+          <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Overall ATS Score</span>
+          {analysis.atsScore !== undefined && analysis.atsScore !== null ? (
+            <>
+              <div className="w-20 h-20">
+                <CircularProgressbar
+                  value={analysis.atsScore}
+                  text={`${analysis.atsScore}%`}
+                  styles={buildStyles({
+                    textColor: "#fff",
+                    pathColor: "#3B82F6",
+                    trailColor: "rgba(255,255,255,0.06)",
+                    textSize: "24px",
+                  })}
+                />
+              </div>
+              <div className={`text-xs px-3 py-1 rounded-full border font-semibold ${getScoreColor(analysis.atsScore)}`}>
+                {analysis.atsScore >= 80 ? 'Strong' : analysis.atsScore >= 60 ? 'Needs Improvement' : 'Low'}
+              </div>
+            </>
+          ) : (
+            <p className="text-xl font-bold text-white my-4">—</p>
+          )}
         </div>
 
         {/* Semantic Vector Match */}
-        <div className="glass-card p-6 rounded-2xl border border-slate-800 text-center space-y-2 flex flex-col justify-center">
-          <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Semantic Similarity</span>
-          <p className="text-4xl font-extrabold text-sky-400 my-2">{analysis.semanticSimilarity}%</p>
-          <p className="text-[11px] text-slate-400">Sentence Transformer Cosine Match</p>
+        <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl text-center flex flex-col justify-center gap-2">
+          <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Job Description Match</span>
+          {analysis.jobId ? (
+            <>
+              <p className={`text-4xl font-bold my-1 ${getScoreColorText(analysis.semanticSimilarity || 0)}`}>{analysis.semanticSimilarity ?? '—'}%</p>
+              <p className="text-xs text-slate-400">
+                {(analysis.semanticSimilarity || 0) >= 80 ? 'Strong Match' : (analysis.semanticSimilarity || 0) >= 60 ? 'Moderate Match' : 'Low Match'}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-3xl font-bold text-slate-500 my-1">N/A</p>
+              <p className="text-xs text-slate-400">Add a job description for targeted matching</p>
+            </>
+          )}
         </div>
 
-        {/* Shortlist Readiness */}
-        <div className="glass-card p-6 rounded-2xl border border-slate-800 text-center space-y-2 flex flex-col justify-center">
-          <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Shortlist Readiness</span>
-          <p className="text-base font-bold text-emerald-400 my-2">{analysis.shortlistReadiness}</p>
-          <p className="text-[11px] text-slate-400">Based on recruiter criteria</p>
-        </div>
-
-        {/* Sections Detected */}
-        <div className="glass-card p-6 rounded-2xl border border-slate-800 text-center space-y-2 flex flex-col justify-center">
-          <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Detected Sections</span>
-          <p className="text-3xl font-extrabold text-purple-400 my-2">{analysis.detectedSections?.length || 0} / 5</p>
-          <p className="text-[11px] text-slate-400">spaCy section extractor</p>
-        </div>
-
-      </div>
-
-      {/* Tabs Header */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'overview' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Overview & Breakdown
-        </button>
-        <button
-          onClick={() => setActiveTab('bullets')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'bullets' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Rewritten Resume Bullets ({analysis.rewrittenBullets?.length || 0})
-        </button>
-        <button
-          onClick={() => setActiveTab('recruiter')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === 'recruiter' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Recruiter Feedback & Tips
-        </button>
-      </div>
-
-      {/* TAB 1: OVERVIEW & BREAKDOWN */}
-      {activeTab === 'overview' && (
-        <div className="space-y-8">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            {/* Radar Breakdown Chart */}
-            <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-sky-400" />
-                <span>Deterministic ATS Score Breakdown</span>
-              </h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="#23314E" />
-                    <PolarAngleAxis dataKey="subject" stroke="#94A3B8" tick={{ fontSize: 11 }} />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#475569" />
-                    <Radar name="Candidate Score" dataKey="value" stroke="#38BDF8" fill="#38BDF8" fillOpacity={0.4} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Missing Skills with Learning Links */}
-            <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-400" />
-                <span>Missing Skills & Learning Paths ({analysis.missingSkills?.length || 0})</span>
-              </h3>
-
-              {analysis.missingSkills?.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                  No missing skills detected! Perfect skill match.
+        {/* Sections Detected -> Resume Sections */}
+        <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl flex flex-col justify-center items-center text-center gap-2">
+          <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2">Resume Sections</span>
+          <div className="flex flex-col gap-2 items-start mt-2">
+            {analysis.detectedSections && analysis.detectedSections.length > 0 ? (
+              analysis.detectedSections.map(sec => (
+                <div key={sec} className="text-xs text-slate-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#22C55E]" /> {sec}
                 </div>
+              ))
+            ) : (
+              <p className="text-xs text-slate-400">No core sections detected.</p>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* 3. Strengths & Areas to Improve */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+      >
+        {/* Strengths */}
+        <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl space-y-4">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-[#22C55E]" />
+            <span>Strengths</span>
+          </h3>
+          <div className="space-y-3">
+            {analysis.strengths && analysis.strengths.length > 0 ? (
+              <ul className="space-y-3">
+                {analysis.strengths.map((str, idx) => (
+                  <li key={idx} className="text-sm text-slate-300 flex items-start gap-2">
+                    <span className="text-[#22C55E] mt-0.5">•</span>
+                    <span>{str}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-slate-400 italic">No strengths data available.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Weaknesses */}
+        <div className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl space-y-4">
+          <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-[#EF4444]" />
+            <span>Areas to Improve</span>
+          </h3>
+          <div className="space-y-3">
+            {analysis.weaknesses && analysis.weaknesses.length > 0 ? (
+              <ul className="space-y-3">
+                {analysis.weaknesses.map((weak, idx) => (
+                  <li key={idx} className="text-sm text-slate-300 flex items-start gap-2">
+                    <span className="text-[#EF4444] mt-0.5">•</span>
+                    <span>{weak}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-slate-400 italic">No improvement areas found.</p>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* 5. Missing Skills */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl space-y-4"
+      >
+        <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-[#F59E0B]" />
+          <span>Missing Skills</span>
+        </h3>
+
+        {(!analysis.missingSkills || analysis.missingSkills.length === 0) ? (
+          <div className="py-4 text-[#22C55E] text-sm font-medium flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5" />
+            Great — no significant missing skills detected.
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            {analysis.missingSkills.map((item, idx) => (
+              item.learning_link ? (
+                <a
+                  key={idx}
+                  href={item.learning_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white hover:bg-[#3B82F6]/20 hover:border-[#3B82F6]/50 transition-colors flex flex-col gap-1 group"
+                  title="Click to learn"
+                >
+                  <span className="text-sm font-bold">{item.skill || item}</span>
+                  {item.importance && <span className="text-[10px] text-slate-400 group-hover:text-slate-300">Importance: {item.importance}</span>}
+                </a>
               ) : (
-                <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-                  {analysis.missingSkills?.map((item, idx) => (
-                    <div key={idx} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <span className="text-sm font-semibold text-white uppercase">{item.skill}</span>
-                        <div className="text-[10px] text-amber-400 font-mono">Urgency: {item.importance}</div>
-                      </div>
-                      <a
-                        href={item.learning_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 rounded-lg bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 text-xs font-medium border border-sky-500/20 flex items-center gap-1 transition-colors"
-                      >
-                        <span>Learn Skill</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  ))}
+                <div key={idx} className="px-4 py-2 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white flex flex-col gap-1">
+                  <span className="text-sm font-bold">{item.skill || item}</span>
+                  {item.importance && <span className="text-[10px] text-slate-400">Importance: {item.importance}</span>}
                 </div>
-              )}
-            </div>
-
-          </div>
-
-          {/* Strong Skills Badge Grid */}
-          <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-              <span>Matched Strong Skills ({analysis.strongSkills?.length || 0})</span>
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {analysis.strongSkills?.map((skill, idx) => (
-                <span key={idx} className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>{skill}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-{/* AI Learning Roadmap */}
-
-{analysis.roadmap && analysis.roadmap.length > 0 && (
-  <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-6">
-
-    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-      🗺 Personalized Learning Roadmap
-    </h3>
-
-    <div className="space-y-5">
-
-      {analysis.roadmap.map((week, index) => (
-
-        <div
-          key={index}
-          className="rounded-xl border border-slate-700 bg-slate-900/60 p-5"
-        >
-
-          <h4 className="text-sky-400 font-bold text-base mb-3">
-            Week {week.week}: {week.title}
-          </h4>
-
-          <ul className="space-y-2">
-
-            {week.tasks.map((task, i) => (
-
-              <li
-                key={i}
-                className="flex items-start gap-2 text-slate-300 text-sm"
-              >
-                <span className="text-green-400 mt-0.5">✔</span>
-                {task}
-              </li>
-
-            ))}
-
-          </ul>
-
-        </div>
-
-      ))}
-
-    </div>
-
-  </div>
-)}
-        </div>
-      )}
-      
-
-      {/* TAB 2: REWRITTEN RESUME BULLETS */}
-      {activeTab === 'bullets' && (
-        <div className="space-y-6">
-          <div className="space-y-1">
-            <h2 className="text-lg font-bold text-white">AI-Rewritten Action Bullets</h2>
-            <p className="text-xs text-slate-400">Gemini LLM bullet point transformer replacing passive language with metrics & power action verbs.</p>
-          </div>
-
-          <div className="space-y-4">
-            {analysis.rewrittenBullets?.map((bullet, idx) => (
-              <div key={idx} className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-                <div className="space-y-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Original Bullet Point #{idx + 1}</span>
-                  <p className="text-xs text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800 line-through decoration-rose-500/60">
-                    {bullet.original}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> ATS Optimized Bullet Point #{idx + 1}
-                  </span>
-                  <p className="text-xs text-white font-medium bg-emerald-950/20 p-3.5 rounded-xl border border-emerald-500/30">
-                    {bullet.improved}
-                  </p>
-                </div>
-
-                <p className="text-[11px] text-slate-400 italic">
-                  <span className="font-semibold text-sky-400">Optimization Note:</span> {bullet.impact_factor}
-                </p>
-              </div>
+              )
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </motion.div>
 
-      {/* TAB 3: RECRUITER FEEDBACK */}
-      {activeTab === 'recruiter' && (
-        <div className="space-y-6">
-          
-          <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <Zap className="w-5 h-5 text-purple-400" />
-              <span>Recruiter Assessment</span>
-            </h3>
-            <p className="text-xs text-slate-300 leading-relaxed italic bg-slate-900/60 p-4 rounded-xl border border-slate-800">
-              "{analysis.recruiterFeedback}"
-            </p>
+
+
+      {/* 5. Technical Skill Profile */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl space-y-6"
+      >
+        <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-[#8B5CF6]" />
+          <span>Technical Skills</span>
+        </h3>
+        {analysis.techSkillProfile && Object.keys(analysis.techSkillProfile).length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(analysis.techSkillProfile).map(([key, skills]) => (
+              skills && skills.length > 0 ? (
+                <div key={key} className="space-y-2">
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    {key.replace('_', ' ')}
+                  </div>
+                  <div className="text-sm text-slate-200">
+                    {skills.join(", ")}
+                  </div>
+                </div>
+              ) : null
+            ))}
           </div>
+        ) : (
+          <p className="text-xs text-slate-400 italic">No technical profile data available.</p>
+        )}
+      </motion.div>
 
-          <div className="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-sky-400" />
-              <span>Actionable AI Recommendations</span>
-            </h3>
-            <ul className="space-y-3">
-              {analysis.recommendations?.map((rec, idx) => (
-                <li key={idx} className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-200 flex items-start gap-3">
-                  <span className="w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
-                    {idx + 1}
-                  </span>
-                  <span className="leading-relaxed">{rec}</span>
+      {/* 7. Recommended Improvements */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="p-6 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-xl space-y-4"
+      >
+        <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <CheckCircle2 className="w-5 h-5 text-[#3B82F6]" />
+          <span>Recommended Improvements</span>
+        </h3>
+
+        {/* Reads both camelCase and snake_case since it's unclear whether
+            the Node layer between Python and this component renames keys —
+            this was likely the actual cause of "No specific improvements
+            recommended" always showing, on top of the backend having no
+            fallback data at all (also fixed). */}
+        {(() => {
+          const improvements = analysis.recommendedImprovements || analysis.recommended_improvements || [];
+          return improvements.length > 0 ? (
+            <ul className="space-y-4 mt-4">
+              {improvements.map((item, i) => (
+                <li key={i} className="text-sm text-slate-300 flex flex-col gap-2 bg-white/[0.02] p-5 rounded-xl border border-white/[0.05]">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#3B82F6] shrink-0" />
+                    <span className="font-bold text-white text-base">{item.title}</span>
+                  </div>
+                  <div className="ml-6 space-y-2">
+                    <p className="text-slate-400"><span className="text-slate-300 font-semibold">Why it matters:</span> {item.why_it_matters}</p>
+                    <p className="text-slate-300"><span className="text-[#3B82F6] font-semibold">What to change:</span> {item.what_to_change}</p>
+                  </div>
                 </li>
               ))}
             </ul>
-          </div>
+          ) : (
+            <p className="text-sm text-slate-400 italic">No specific improvements recommended.</p>
+          );
+        })()}
+      </motion.div>
 
-        </div>
-      )}
+
 
     </div>
   );
