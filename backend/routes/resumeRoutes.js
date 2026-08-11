@@ -84,6 +84,7 @@ router.post('/upload', auth, upload.single('resume'), async (req, res) => {
 
     const filePath = req.file.path;
     const parsedResult = await parseResumeWithPython(filePath);
+    console.log("PYTHON PARSER RESULT:", JSON.stringify(parsedResult, null, 2));
 
     const existingCount = await Resume.countDocuments({
       userId: req.user.userId
